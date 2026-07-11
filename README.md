@@ -20,6 +20,31 @@ SafeO is built for the **AMD Developer Hackathon: ACT II**: cloud AI agents,
 AMD GPU acceleration, ROCm-ready model workflows, and Fireworks AI models hosted
 on AMD infrastructure.
 
+## Platform Integration
+
+SafeO is **platform-agnostic by design**. It exposes a universal REST API — any
+system that can make an HTTP call can be protected by SafeO with no changes to
+its own codebase:
+
+| Platform | Integration method |
+|---|---|
+| ERP (Odoo, SAP, Oracle) | HTTP hook on form submit / before persistence |
+| REST APIs | Middleware or API gateway plugin |
+| WhatsApp / Telegram bots | Message pre-processing hook |
+| Web forms | Backend validation layer |
+| CI/CD pipelines | Pre-merge payload scan |
+| Custom internal tools | Direct `POST /v1/scan` call |
+
+**For this hackathon demo, SafeO is integrated with Odoo ERP** — the most
+widely deployed open-source ERP in the MENA region. The Odoo module
+(`frontend/odoo_module/`) intercepts every ERP form submission, forwards the
+payload to SafeO, and blocks or warns the user before any record is written to
+the database.
+
+The Odoo integration is the demo vehicle, not the product boundary. SafeO's
+security engine is identically accessible to SAP, Oracle Fusion, or any
+proprietary internal tool the moment a single API key is configured.
+
 ## Key Features
 
 ### 🤖 SafeO Assistant — Role-Adaptive Security Chatbot
