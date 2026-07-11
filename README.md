@@ -61,6 +61,7 @@ The Assistant is **not a generic chatbot**. It runs the same forensic engine for
 
 Live: [https://safeo-shield-1.onrender.com/chat](https://safeo-shield-1.onrender.com/chat)
 
+⚠️ Note: The SafeO Assistant is not active in the live deployment right now, as the backend engine is offline on our free-tier host. All other features work as shown in the demo video. Please run locally (see setup below) to try the Assistant live.
 ---
 
 ### 🖼️ Visual Evidence Capture
