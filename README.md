@@ -680,8 +680,8 @@ Example response shape:
 ## Quick Start
 
 ```bash
-git clone https://github.com/Shreeya1-pixel/SafeO_lablabai.git
-cd SafeO_lablabai/backend
+git clone https://github.com/CandyButcher27/safeo-shield.git
+cd safeo-shield/backend
 
 python3 -m venv .venv
 source .venv/bin/activate
