@@ -1,0 +1,306 @@
+/* SafeO standalone website — matches Odoo SafeO dashboard styling */
+:root {
+  --safeo-red: #E8202A;
+  --safeo-border: #e5e7eb;
+  --safeo-text: #1f2937;
+  --safeo-muted: #6b7280;
+  --safeo-green-bg: #dcfce7;
+  --safeo-green-text: #166534;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  background: #ffffff;
+  color: var(--safeo-text);
+}
+
+.safeo-app { min-height: 100vh; display: flex; flex-direction: column; }
+
+.safeo-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--safeo-border);
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+.safeo-brand { display: flex; align-items: center; gap: 12px; }
+.safeo-brand-mark {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--safeo-red); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px;
+}
+.safeo-brand-text h1 { margin: 0; font-size: 20px; font-weight: 700; }
+.safeo-brand-text span { color: var(--safeo-muted); font-size: 12px; }
+
+.safeo-nav { display: flex; gap: 8px; flex: 1; }
+.safeo-nav-link {
+  padding: 6px 12px; border-radius: 8px; text-decoration: none;
+  color: #374151; font-size: 13px; font-weight: 500;
+}
+.safeo-nav-link:hover { background: #f3f4f6; }
+.safeo-nav-link.active { background: #f3f4f6; color: #111827; font-weight: 600; }
+
+.safeo-header-right {
+  display: flex; align-items: center; gap: 10px; margin-left: auto;
+}
+.safeo-engine-dot {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+}
+.safeo-engine-dot.ok { background: #22c55e; }
+.safeo-engine-dot.off { background: #9ca3af; }
+.safeo-engine-label { font-size: 12px; color: var(--safeo-muted); }
+
+.sim-run-btn {
+  background: #111827; color: #fff; border: none; border-radius: 8px;
+  padding: 8px 14px; cursor: pointer; font-size: 13px; font-weight: 600;
+  text-decoration: none; display: inline-block;
+}
+.sim-run-btn:hover { background: #374151; }
+
+.safeo-nav-cta { white-space: nowrap; }
+
+.safeo-refresh-btn {
+  border: 1px solid #d1d5db; background: #fff; color: #111827;
+  border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 13px;
+}
+
+.safeo-main { flex: 1; padding: 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+.safeo-page-header { margin-bottom: 24px; }
+.safeo-page-header h2 { margin: 0 0 8px; font-size: 22px; }
+.safeo-page-header p { margin: 0; color: var(--safeo-muted); font-size: 14px; max-width: 720px; }
+
+.safeo-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px; margin-bottom: 20px;
+}
+.safeo-stat-card {
+  background: #fff; border: 1px solid var(--safeo-border); border-radius: 12px;
+  padding: 16px; text-align: center;
+}
+.safeo-stat-card.accent-danger { border-color: #fca5a5; }
+.safeo-stat-value { font-size: 28px; font-weight: 700; color: #111827; }
+.safeo-stat-label { font-size: 12px; color: var(--safeo-muted); margin-top: 4px; }
+
+.safeo-erp-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; margin-bottom: 24px;
+  background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px;
+  text-decoration: none; color: #0c4a6e; font-size: 14px;
+  cursor: pointer; transition: background 0.15s;
+}
+.safeo-erp-banner:hover { background: #e0f2fe; }
+.safeo-erp-banner-cta { font-weight: 600; color: #0369a1; }
+
+.safeo-card {
+  background: #fff; border: 1px solid var(--safeo-border); border-radius: 12px;
+  padding: 20px; margin-bottom: 20px; overflow-x: auto;
+}
+.safeo-card h3 { margin: 0 0 16px; font-size: 16px; }
+
+.safeo-table { width: 100%; min-width: 820px; border-collapse: collapse; font-size: 13px; }
+.safeo-table th, .safeo-table td {
+  text-align: left; padding: 10px 12px; border-bottom: 1px solid #f1f5f9;
+}
+.safeo-table th { color: var(--safeo-muted); font-weight: 600; font-size: 11px; text-transform: uppercase; }
+
+.decision-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  font-size: 10px; font-weight: 700;
+}
+.decision-badge.block { background: #fee2e2; color: #b91c1c; }
+.decision-badge.warn { background: #fef3c7; color: #92400e; }
+.decision-badge.allow { background: var(--safeo-green-bg); color: var(--safeo-green-text); }
+
+.safeo-jira-cell {
+  min-width: 140px;
+  vertical-align: middle;
+}
+.safeo-jira-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.safeo-jira-btn:hover:not(:disabled) { background: #1d4ed8; }
+.safeo-jira-btn:disabled { opacity: 0.65; cursor: wait; }
+.safeo-jira-link {
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.safeo-jira-link:hover { text-decoration: underline; }
+.safeo-jira-err {
+  display: block;
+  margin-top: 4px;
+  color: #b91c1c;
+  font-size: 11px;
+  line-height: 1.3;
+  max-width: 180px;
+}
+
+.safeo-muted { color: var(--safeo-muted); font-size: 13px; }
+.mono { font-family: ui-monospace, monospace; font-size: 12px; }
+
+.safeo-status-strip {
+  display: flex; gap: 20px; font-size: 12px; color: var(--safeo-muted);
+  padding: 12px 0;
+}
+
+.safeo-dashboard-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.safeo-gemma-badge--inline {
+  position: static !important;
+  bottom: auto !important;
+  right: auto !important;
+  z-index: auto;
+  pointer-events: auto;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ERP Connect grid */
+.safeo-erp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+.safeo-erp-card {
+  border: 1px solid var(--safeo-border); border-radius: 12px;
+  padding: 18px; background: #fff; display: flex; flex-direction: column;
+}
+.safeo-erp-card-top { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.safeo-erp-icon {
+  width: 44px; height: 44px; border-radius: 10px; background: #f3f4f6;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #374151; flex-shrink: 0;
+}
+.safeo-erp-card h3 { margin: 0 0 6px; font-size: 16px; }
+.safeo-erp-card-body { flex: 1; font-size: 13px; color: #374151; }
+.safeo-erp-card-body p { margin: 4px 0; }
+.safeo-erp-card-actions {
+  display: flex; flex-direction: column; gap: 8px; margin-top: 14px;
+}
+.safeo-btn-muted {
+  font-size: 12px; color: var(--safeo-muted); text-decoration: none; text-align: center;
+}
+.safeo-btn-muted:hover { color: #111827; }
+
+.safeo-status-badge { font-size: 12px; font-weight: 600; }
+.safeo-status-badge.connected { color: var(--safeo-green-text); }
+.safeo-status-badge.idle { color: #9ca3af; }
+
+.safeo-code {
+  font-size: 11px; background: #1f2937; color: #e5e7eb;
+  padding: 12px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap;
+}
+.safeo-input {
+  width: 100%; padding: 8px 12px; border: 1px solid #d1d5db;
+  border-radius: 8px; font-size: 13px; margin: 8px 0;
+}
+.safeo-key-row {
+  display: flex; gap: 8px; align-items: center; margin: 8px 0 16px;
+}
+.safeo-key-row code {
+  flex: 1; padding: 8px; background: #f3f4f6; border-radius: 6px; font-size: 12px;
+}
+.safeo-ok { color: var(--safeo-green-text); font-size: 13px; }
+.safeo-err { color: #b91c1c; font-size: 13px; }
+
+/* Drawer */
+.safeo-drawer-overlay, .safeo-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+  z-index: 1000; display: flex; justify-content: flex-end;
+}
+.safeo-modal-overlay { justify-content: center; align-items: center; }
+.safeo-drawer {
+  width: min(480px, 100vw); height: 100vh; background: #fff;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column;
+}
+.safeo-drawer-header, .safeo-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 20px; border-bottom: 1px solid var(--safeo-border);
+}
+.safeo-drawer-header h3, .safeo-modal-header h3 { margin: 0; font-size: 16px; }
+.safeo-drawer-close {
+  background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280; line-height: 1;
+}
+.safeo-drawer-body, .safeo-modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+.safeo-modal {
+  background: #fff; border-radius: 12px; width: min(520px, 92vw);
+  max-height: 85vh; overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+/* Toast */
+.safeo-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #111827; color: #fff; padding: 10px 20px; border-radius: 8px;
+  font-size: 13px; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* AMD / Fireworks Gemma integration badge */
+.safeo-gemma-badge {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 900;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  letter-spacing: 0.01em;
+}
+.safeo-gemma-badge--default {
+  background: rgba(255, 255, 255, 0.95);
+  color: #374151;
+  border-color: rgba(232, 32, 42, 0.25);
+}
+.safeo-gemma-badge--live {
+  background: rgba(220, 252, 231, 0.96);
+  color: #166534;
+  border-color: rgba(34, 197, 94, 0.35);
+}
+.safeo-gemma-badge--fallback {
+  background: rgba(254, 243, 199, 0.96);
+  color: #92400e;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+.safeo-gemma-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.safeo-gemma-badge--default .safeo-gemma-badge-dot { background: #9ca3af; }
+.safeo-gemma-badge--live .safeo-gemma-badge-dot { background: #22c55e; }
+.safeo-gemma-badge--fallback .safeo-gemma-badge-dot { background: #f59e0b; }
+.safeo-gemma-badge-text { white-space: nowrap; }

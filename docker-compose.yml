@@ -1,0 +1,31 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: safeo-backend
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      SAFEO_FEEDBACK_DB: /data/safeo_feedback.db
+    volumes:
+      - safeo-data:/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend/website
+      dockerfile: Dockerfile
+    container_name: safeo-frontend
+    ports:
+      - "5174:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  safeo-data:
+    driver: local

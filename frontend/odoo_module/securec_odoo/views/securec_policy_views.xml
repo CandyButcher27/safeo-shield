@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- List view -->
+    <record id="view_securec_policy_list" model="ir.ui.view">
+        <field name="name">securec.policy.list</field>
+        <field name="model">securec.policy</field>
+        <field name="arch" type="xml">
+            <list string="Compliance Policies">
+                <field name="name"/>
+                <field name="region" widget="badge"
+                       decoration-info="region == 'uae'"
+                       decoration-warning="region == 'eu'"
+                       decoration-primary="region == 'us'"
+                       decoration-muted="region == 'global'"/>
+                <field name="pii_strictness" widget="badge"
+                       decoration-danger="pii_strictness == 'very_high'"
+                       decoration-warning="pii_strictness == 'high'"
+                       decoration-info="pii_strictness == 'medium'"
+                       decoration-success="pii_strictness == 'low'"/>
+                <field name="block_threshold" widget="float" digits="[1,2]"/>
+                <field name="masking_enabled" widget="boolean_toggle"/>
+                <field name="logging_required" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form view -->
+    <record id="view_securec_policy_form" model="ir.ui.view">
+        <field name="name">securec.policy.form</field>
+        <field name="model">securec.policy</field>
+        <field name="arch" type="xml">
+            <form string="Compliance Policy">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="e.g. UAE Compliance Policy"/></h1>
+                    </div>
+                    <group>
+                        <group string="Region &amp; Identity">
+                            <field name="region" widget="radio"/>
+                        </group>
+                        <group string="PII Controls">
+                            <field name="pii_strictness"/>
+                            <field name="block_threshold" widget="float"
+                                   help="Risk score 0–1 above which a BLOCK is forced"/>
+                            <field name="masking_enabled"/>
+                            <field name="logging_required"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Policy Notes">
+                            <field name="description" nolabel="1" widget="text"
+                                   placeholder="Describe this policy's compliance requirements..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search view -->
+    <record id="view_securec_policy_search" model="ir.ui.view">
+        <field name="name">securec.policy.search</field>
+        <field name="model">securec.policy</field>
+        <field name="arch" type="xml">
+            <search string="Search Policies">
+                <field name="name"/>
+                <filter string="UAE" name="uae" domain="[('region','=','uae')]"/>
+                <filter string="EU" name="eu" domain="[('region','=','eu')]"/>
+                <filter string="US" name="us" domain="[('region','=','us')]"/>
+                <filter string="Global" name="global" domain="[('region','=','global')]"/>
+                <group>
+                    <filter string="Region" name="by_region" context="{'group_by': 'region'}"/>
+                    <filter string="PII Strictness" name="by_pii" context="{'group_by': 'pii_strictness'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_securec_policy_list" model="ir.actions.act_window">
+        <field name="name">Compliance Policies</field>
+        <field name="res_model">securec.policy</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_securec_policy_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No compliance policies defined yet</p>
+            <p>Create region-specific policies to control SafeO's blocking behaviour per jurisdiction.</p>
+        </field>
+    </record>
+</odoo>

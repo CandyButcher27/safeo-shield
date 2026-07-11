@@ -1,0 +1,854 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="securec_odoo.Dashboard" owl="1">
+<div class="safeo-app safeo-dashboard-light">
+    <div class="safeo-header">
+        <div class="safeo-brand">
+            <div class="safeo-brand-text">
+                <h1>SafeO ERP Protection Layer</h1>
+                <span>Real-time business risk decisions for CRM, Finance, and workforce workflows</span>
+            </div>
+        </div>
+        <div class="safeo-header-right">
+            <div class="safeo-mode-strip">
+                <span t-att-class="state.apiOffline ? 'safeo-mode-grey' : 'safeo-mode-ok'">
+                    Backend API: <t t-esc="state.apiOffline ? 'Offline' : 'Connected ✓'"/>
+                </span>
+                <span class="safeo-mode-ok">Odoo ERP: Connected ✓</span>
+                <span class="safeo-mode-grey">Mode: <t t-esc="sandboxModeLabel()"/></span>
+            </div>
+            <div class="safeo-live-signal">
+                <span class="live-dot"/>
+                <span>Live Monitoring</span>
+            </div>
+            <button class="safeo-refresh-btn" t-on-click="loadData">Refresh</button>
+        </div>
+    </div>
+
+    <div class="safeo-body">
+        <div t-if="state.apiOffline" class="safeo-api-warning">
+            Decision engine backend is offline. Dashboard is showing local fallback activity data.
+        </div>
+        <div class="safeo-shell">
+            <aside class="safeo-sidebar">
+                <h4>ERP Modules</h4>
+                <button t-att-class="'safeo-sidebar-item' + (state.activeModule === 'CRM' ? ' active' : '')" data-module="CRM" t-on-click="setModuleFromEvent">🤝 CRM</button>
+                <button t-att-class="'safeo-sidebar-item' + (state.activeModule === 'Finance' ? ' active' : '')" data-module="Finance" t-on-click="setModuleFromEvent">💰 Finance</button>
+                <button t-att-class="'safeo-sidebar-item' + (state.activeModule === 'HR' ? ' active' : '')" data-module="HR" t-on-click="setModuleFromEvent">👥 HR</button>
+                <button t-att-class="'safeo-sidebar-item' + (state.activeModule === 'Procurement' ? ' active' : '')" data-module="Procurement" t-on-click="setModuleFromEvent">📦 Procurement</button>
+                <div class="safeo-sidebar-divider"/>
+                <div class="safeo-sidebar-module-stats" t-if="!state.moduleLoading">
+                    <div class="safeo-sidebar-stat">
+                        <span class="safeo-sidebar-stat-val"><t t-esc="moduleStats().total"/></span>
+                        <span class="safeo-sidebar-stat-lbl">Actions</span>
+                    </div>
+                    <div class="safeo-sidebar-stat">
+                        <span class="safeo-sidebar-stat-val red"><t t-esc="moduleStats().blocked"/></span>
+                        <span class="safeo-sidebar-stat-lbl">Blocked</span>
+                    </div>
+                    <div class="safeo-sidebar-stat">
+                        <span class="safeo-sidebar-stat-val yellow"><t t-esc="moduleStats().warned"/></span>
+                        <span class="safeo-sidebar-stat-lbl">Flagged</span>
+                    </div>
+                    <div class="safeo-sidebar-stat">
+                        <span class="safeo-sidebar-stat-val"><t t-esc="moduleStats().avgRisk"/>%</span>
+                        <span class="safeo-sidebar-stat-lbl">Avg Risk</span>
+                    </div>
+                </div>
+                <div t-if="state.moduleLoading" class="safeo-sidebar-note">Loading...</div>
+            </aside>
+            <div class="safeo-main">
+
+        <div class="safeo-view-switch">
+            <button class="safeo-refresh-btn" t-att-class="state.viewMode === 'dashboard' ? 'safeo-refresh-btn active' : 'safeo-refresh-btn'" t-on-click="switchToDashboard">Live Feed</button>
+            <button class="safeo-refresh-btn" t-att-class="state.viewMode === 'attack_lab' ? 'safeo-refresh-btn active' : 'safeo-refresh-btn'" t-on-click="switchToAttackLab">Sandbox</button>
+            <button class="safeo-refresh-btn" t-att-class="state.viewMode === 'investigations' ? 'safeo-refresh-btn active' : 'safeo-refresh-btn'" t-on-click="switchToInvestigations">Investigations</button>
+            <button class="safeo-refresh-btn" t-att-class="state.viewMode === 'integrations' ? 'safeo-refresh-btn active' : 'safeo-refresh-btn'" t-on-click="switchToIntegrations">Integrations</button>
+        </div>
+
+        <div t-if="driftDetected()" class="safeo-drift-banner">
+            ⚠ Attack pattern drift detected — distribution shift vs baseline (PSI alert)
+        </div>
+
+        <t t-if="state.viewMode === 'dashboard'">
+
+        <!-- Module context banner — updates on every sidebar click -->
+        <div class="safeo-module-banner">
+            <span class="safeo-module-icon"><t t-esc="moduleIcon()"/></span>
+            <div class="safeo-module-banner-text">
+                <strong><t t-esc="state.activeModule"/> Module</strong>
+                <span><t t-esc="moduleDescription()"/></span>
+            </div>
+            <div class="safeo-module-banner-stats">
+                <span t-att-class="'safeo-module-pill ' + (moduleStats().blocked > 0 ? 'pill-danger' : 'pill-ok')">
+                    <t t-esc="moduleStats().blocked"/> Blocked
+                </span>
+                <span t-att-class="'safeo-module-pill ' + (moduleStats().warned > 0 ? 'pill-warn' : 'pill-ok')">
+                    <t t-esc="moduleStats().warned"/> Flagged
+                </span>
+                <span class="safeo-module-pill pill-ok">
+                    <t t-esc="moduleStats().allowed"/> Allowed
+                </span>
+                <span class="safeo-module-pill" t-att-class="'safeo-module-pill ' + (moduleStats().avgRisk >= 70 ? 'pill-danger' : moduleStats().avgRisk >= 30 ? 'pill-warn' : 'pill-ok')">
+                    Avg Risk <t t-esc="moduleStats().avgRisk"/>%
+                </span>
+            </div>
+        </div>
+
+        <div class="safeo-stat-grid">
+            <div class="safeo-stat-card command-card total">
+                <div class="stat-info">
+                    <div class="stat-icon">🧭</div>
+                    <div class="stat-value"><t t-esc="state.metrics.total_requests"/></div>
+                    <div class="stat-label">Total Actions</div>
+                </div>
+            </div>
+            <div class="safeo-stat-card command-card blocked">
+                <div class="stat-info">
+                    <div class="stat-icon">🔴</div>
+                    <div class="stat-value"><t t-esc="state.metrics.blocked_count"/></div>
+                    <div class="stat-label">Blocked Threats</div>
+                </div>
+            </div>
+            <div class="safeo-stat-card command-card activity">
+                <div class="stat-info">
+                    <div class="stat-icon">🟡</div>
+                    <div class="stat-value"><t t-esc="riskActivityPct() + '%'"/></div>
+                    <div class="stat-label">Risk Activity</div>
+                </div>
+            </div>
+            <div class="safeo-stat-card command-card health">
+                <div class="stat-info">
+                    <div class="stat-icon">🟢</div>
+                    <div class="stat-value"><t t-esc="securityScore()"/></div>
+                    <div class="stat-label">System Health</div>
+                </div>
+            </div>
+            <div class="safeo-stat-card command-card">
+                <div class="stat-info">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-value"><t t-esc="llmSavingsPct() + '%'"/></div>
+                    <div class="stat-label">LLM Calls Saved</div>
+                </div>
+            </div>
+            <div class="safeo-stat-card command-card" t-att-class="driftDetected() ? 'blocked' : 'activity'">
+                <div class="stat-info">
+                    <div class="stat-icon"><t t-esc="driftDetected() ? '🔴' : '🟢'"/></div>
+                    <div class="stat-value"><t t-esc="driftDetected() ? 'ALERT' : 'OK'"/></div>
+                    <div class="stat-label">Drift Status</div>
+                </div>
+            </div>
+            <div class="safeo-stat-card command-card">
+                <div class="stat-info">
+                    <div class="stat-icon">🔍</div>
+                    <div class="stat-value"><t t-esc="investigationsOpen()"/></div>
+                    <div class="stat-label">Investigations Open</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="safeo-card safeo-gpu-panel">
+            <h3>AMD GPU — <t t-esc="gpuStats().device_name || 'CPU fallback'"/></h3>
+            <div class="safeo-gpu-row">
+                <span>Memory</span>
+                <div class="safeo-gpu-bar"><div class="safeo-gpu-fill" t-att-style="'width:' + (gpuStats().memory_pct || 0) + '%'"/></div>
+                <span class="mono"><t t-esc="Math.round(gpuStats().memory_used_mb || 0)"/> / <t t-esc="Math.round(gpuStats().memory_total_mb || 0)"/> MB</span>
+            </div>
+            <div class="safeo-gpu-meta">
+                <span>Utilisation: <t t-esc="gpuStats().gpu_utilisation_pct || 0"/>%</span>
+                <span>Models: <t t-esc="(gpuStats().models_loaded || []).join(', ') || 'none'"/></span>
+                <span>Avg inference: <t t-esc="gpuStats().avg_inference_ms || 0"/> ms</span>
+            </div>
+        </div>
+
+        <div class="safeo-logs-card">
+            <h3>Live Decisions (last 20)</h3>
+            <table class="safeo-table" t-if="liveDecisions().length">
+                <thead><tr><th>Time</th><th>Source</th><th>Script</th><th>Tier</th><th>Risk</th><th>Decision</th></tr></thead>
+                <tbody>
+                    <t t-foreach="liveDecisions()" t-as="row" t-key="row.request_id + (row.time || '')">
+                        <tr>
+                            <td><t t-esc="formatTime(row.time) || '—'"/></td>
+                            <td><t t-esc="row.source_system || '—'"/></td>
+                            <td><t t-esc="row.script_detected || 'latin'"/></td>
+                            <td><span t-att-class="'tier-badge ' + tierClass(row.tier_used)"><t t-esc="tierBadge(row.tier_used)"/></span></td>
+                            <td><span t-att-class="'mono ' + riskStateClassFromScore(row.risk_score)"><t t-esc="riskPercent(row.risk_score) + '%'"/></span></td>
+                            <td><span t-att-class="'decision-badge ' + decisionClassUpper(row.decision)"><t t-esc="row.decision"/></span></td>
+                        </tr>
+                    </t>
+                </tbody>
+            </table>
+            <div t-else="" class="safeo-empty">No scans yet — use Sandbox tab.</div>
+        </div>
+
+        <div class="safeo-wow-pipeline-grid">
+            <div class="safeo-card safeo-wow-card">
+                <h3>Latest Blocked Action</h3>
+                <t t-if="latestBlockedAction()">
+                    <div class="wow-decision">🚫 <t t-esc="latestBlockedAction().decision"/></div>
+                    <div class="wow-line"><b>Module:</b> <t t-esc="latestBlockedAction().erp_module || latestBlockedAction().module || 'System'"/></div>
+                    <div class="wow-line"><b>User:</b> <t t-esc="latestBlockedAction().user_id || 'N/A'"/></div>
+                    <div class="wow-line"><b>Risk Score:</b> <t t-esc="riskPercent(latestBlockedAction().risk_score)"/></div>
+                    <div class="wow-line"><b>Reason:</b> <t t-esc="(latestBlockedAction().patterns || []).join(', ') || latestBlockedAction().erp_impact || 'Risk pattern detected'"/></div>
+                    <div class="wow-line"><b>Time:</b> Just now</div>
+                </t>
+                <div t-else="" class="safeo-empty safeo-empty-inline">No blocked actions yet. Run one in Decision Lab.</div>
+            </div>
+            <div class="safeo-card safeo-pipeline-mini">
+                <h3>Decision Pipeline</h3>
+                <div class="pipeline-steps">
+                    <span>Input</span>
+                    <span>→</span>
+                    <span>Scan</span>
+                    <span>→</span>
+                    <span>Score</span>
+                    <span>→</span>
+                    <span>Decision</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="safeo-card safeo-risk-to-action">
+            <h3>From Risk → Action</h3>
+            <p class="safeo-risk-to-action-sub">Blocked ERP input → optional Jira escalation for the security team</p>
+            <div class="safeo-r2a-grid">
+                <div class="safeo-r2a-risk">
+                    <div class="safeo-r2a-blocked">🚫 <t t-esc="riskToActionJiraPanel().headline"/></div>
+                    <div class="wow-line"><b>Module:</b> <t t-esc="riskToActionJiraPanel().module"/></div>
+                    <div class="wow-line"><b>Risk Score:</b> <t t-esc="riskToActionJiraPanel().riskScore"/></div>
+                    <div class="wow-line"><b>Reason:</b> <t t-esc="riskToActionJiraPanel().reason"/></div>
+                </div>
+                <div class="safeo-r2a-bridge" aria-hidden="true">→</div>
+                <div class="safeo-r2a-jira">
+                    <div class="safeo-r2a-jira-line"><t t-esc="riskToActionJiraPanel().jiraLine"/></div>
+                    <div class="wow-line" t-if="riskToActionJiraPanel().hasJira and riskToActionJiraPanel().jiraUrl">
+                        <b>Ticket:</b>
+                        <a t-att-href="riskToActionJiraPanel().jiraUrl" class="safeo-r2a-link" target="_blank" rel="noopener noreferrer"><t t-esc="riskToActionJiraPanel().jiraKey"/></a>
+                    </div>
+                    <div class="wow-line" t-else="">
+                        <b>Ticket:</b> <t t-esc="riskToActionJiraPanel().jiraKey"/>
+                    </div>
+                    <div class="wow-line"><b>Status:</b> <t t-esc="riskToActionJiraPanel().status"/></div>
+                    <div class="wow-line"><b>Assigned:</b> <t t-esc="riskToActionJiraPanel().assignee"/></div>
+                </div>
+            </div>
+            <p t-if="riskToActionJiraPanel().isDemo" class="safeo-r2a-demo-note">
+                Example workflow — when a real <b>BLOCK</b> is logged, this panel shows live module, score, and Jira fields from Odoo.
+            </p>
+        </div>
+
+        <div class="safeo-mid-grid">
+            <div class="safeo-card">
+                <h3><t t-esc="state.activeModule"/> — Risk Pipeline</h3>
+                <t t-set="modTxns" t-value="moduleTransactions()"/>
+                <table class="safeo-table safeo-table-compact" t-if="modTxns.length">
+                    <thead><tr><th>Action</th><th>User</th><th>Risk</th><th>Decision</th></tr></thead>
+                    <tbody>
+                        <t t-foreach="modTxns" t-as="r" t-key="r.request_id">
+                            <tr>
+                                <td><t t-esc="r.action || 'activity'"/></td>
+                                <td><t t-esc="r.user_id || '-'"/></td>
+                                <td>
+                                    <div class="risk-score-cell">
+                                        <span class="risk-score-big" t-esc="riskPercent(r.risk_score)"/>
+                                        <div class="risk-meter-track">
+                                            <div t-att-class="'risk-meter-fill ' + riskStateClassFromScore(r.risk_score)" t-att-style="riskBarStyle(r.risk_score)"/>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span t-att-class="'decision-badge ' + decisionClassUpper(r.decision)"><t t-esc="r.decision"/></span></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                <div t-else="" class="safeo-empty">No <t t-esc="state.activeModule"/> actions yet. Try running an ERP scenario via the backend or CRM.</div>
+            </div>
+            <div class="safeo-card">
+                <h3><t t-esc="state.activeModule"/> — Behavior Signals</h3>
+                <t t-set="modProfiles" t-value="employeeRiskProfiles()"/>
+                <table class="safeo-table safeo-table-compact" t-if="modProfiles.length">
+                    <thead><tr><th>User</th><th>Actions</th><th>Max Risk</th><th>Flags</th></tr></thead>
+                    <tbody>
+                        <t t-foreach="modProfiles" t-as="p" t-key="p.user">
+                            <tr>
+                                <td><t t-esc="p.user"/></td>
+                                <td><t t-esc="p.actions"/></td>
+                                <td>
+                                    <div class="risk-score-cell">
+                                        <span class="risk-score-big" t-esc="p.maxRisk"/>
+                                        <div class="risk-meter-track">
+                                            <div t-att-class="'risk-meter-fill ' + riskStateClassFromScore(p.maxRisk)" t-att-style="riskBarStyle(p.maxRisk)"/>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><t t-esc="'W:' + p.warned + ' B:' + p.blocked"/></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                <div t-else="" class="safeo-empty">No user activity recorded for <t t-esc="state.activeModule"/> yet.</div>
+            </div>
+            <div class="safeo-card">
+                <h3><t t-esc="state.activeModule"/> — Suspicious Events</h3>
+                <t t-set="modSusp" t-value="moduleSuspicious()"/>
+                <table class="safeo-table safeo-table-compact" t-if="modSusp.length">
+                    <thead><tr><th>Action</th><th>User</th><th>Risk</th><th>Decision</th></tr></thead>
+                    <tbody>
+                        <t t-foreach="modSusp" t-as="s" t-key="s.request_id || s_index">
+                            <tr>
+                                <td><t t-esc="s.action || s.erp_action || '-'"/></td>
+                                <td><t t-esc="s.user_id || '-'"/></td>
+                                <td>
+                                    <div class="risk-score-cell">
+                                        <span class="risk-score-big" t-esc="riskPercent(s.risk_score)"/>
+                                        <div class="risk-meter-track">
+                                            <div t-att-class="'risk-meter-fill ' + riskStateClassFromScore(s.risk_score)" t-att-style="riskBarStyle(s.risk_score)"/>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span t-att-class="'decision-badge ' + decisionClassUpper(s.decision)"><t t-esc="s.decision"/></span></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                <div t-else="" class="safeo-empty">No flagged events for <t t-esc="state.activeModule"/>.</div>
+            </div>
+        </div>
+
+        <div class="safeo-logs-card">
+            <h3><t t-esc="state.activeModule"/> — Decision Log</h3>
+            <t t-set="modDecisions" t-value="moduleFilteredDecisions()"/>
+            <table class="safeo-table" t-if="modDecisions.length">
+                <thead><tr><th>Action</th><th>User</th><th>Risk</th><th>Decision</th><th>Module</th></tr></thead>
+                <tbody>
+                    <t t-foreach="modDecisions" t-as="d" t-key="d.request_id + d.decision">
+                        <tr>
+                            <td><t t-esc="d.action || '-'"/></td>
+                            <td><t t-esc="d.user_id || '-'"/></td>
+                            <td>
+                                <div class="risk-score-cell">
+                                    <span class="risk-score-big" t-esc="riskPercent(d.risk_score)"/>
+                                    <div class="risk-meter-track">
+                                        <div t-att-class="'risk-meter-fill ' + riskStateClassFromScore(d.risk_score)" t-att-style="riskBarStyle(d.risk_score)"/>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span t-att-class="'decision-badge ' + decisionClassUpper(d.decision)"><t t-esc="d.decision"/></span></td>
+                            <td><t t-esc="d.erp_module || d.module || '-'"/></td>
+                        </tr>
+                    </t>
+                </tbody>
+            </table>
+            <div t-else="" class="safeo-empty">No decisions recorded for <t t-esc="state.activeModule"/> yet.</div>
+        </div>
+
+        <div class="safeo-card safeo-command-card">
+            <h3>Business Activity Monitoring</h3>
+            <p class="safeo-note">Unified feed for employee authentication, ERP decision events, and integration health signals.</p>
+            <div t-if="state.activityFeed.length" class="safeo-feed-list">
+                <t t-foreach="state.activityFeed" t-as="row" t-key="row.id">
+                    <div t-att-class="'safeo-feed-row ' + feedSeverityClass(row.severity)">
+                        <div class="safeo-feed-head">
+                            <span class="safeo-feed-badge" t-esc="row.badge"/>
+                            <span class="safeo-feed-time" t-esc="formatTime(row.timestamp)"/>
+                        </div>
+                        <div class="safeo-feed-title" t-esc="row.title"/>
+                        <div class="safeo-feed-detail" t-esc="row.detail"/>
+                        <div class="safeo-feed-rec"><t t-esc="row.recommendation"/></div>
+                    </div>
+                </t>
+            </div>
+            <div t-else="" class="safeo-empty">No activity yet. Try a failed login or a Decision Lab scan.</div>
+        </div>
+
+        <div class="safeo-exposure-grid">
+            <div class="safeo-stat-card">
+                <div class="stat-info">
+                    <div class="stat-value">AED <t t-esc="Math.round(state.metrics.estimated_exposure_avoided_today_aed || 0)"/></div>
+                    <div class="stat-label">Estimated exposure signal (today)</div>
+                </div>
+            </div>
+            <div class="safeo-stat-card">
+                <div class="stat-info">
+                    <div class="stat-value"><t t-esc="state.metrics.high_risk_users_24h || 0"/></div>
+                    <div class="stat-label">High-signal actors (24h)</div>
+                </div>
+            </div>
+            <div class="safeo-stat-card">
+                <div class="stat-info">
+                    <div class="stat-value"><t t-esc="state.metrics.blocks_today_count || 0"/></div>
+                    <div class="stat-label">Blocked ERP actions today</div>
+                </div>
+            </div>
+        </div>
+        <p class="safeo-exposure-disclaimer"><t t-esc="state.metrics.exposure_disclaimer || ''"/></p>
+
+        <div class="safeo-card">
+            <h3>Last 24 hours — activity mix (audit)</h3>
+            <div class="risk-bar-row">
+                <span class="risk-bar-label">Auth</span>
+                <div class="risk-bar-track"><div class="risk-bar-fill blue" t-att-style="'width:' + mixPct('auth') + '%'"/></div>
+                <span class="risk-bar-count"><t t-esc="mixCount('auth')"/></span>
+            </div>
+            <div class="risk-bar-row">
+                <span class="risk-bar-label">Decision Engine</span>
+                <div class="risk-bar-track"><div class="risk-bar-fill red" t-att-style="'width:' + mixPct('waf') + '%'"/></div>
+                <span class="risk-bar-count"><t t-esc="mixCount('waf')"/></span>
+            </div>
+            <div class="risk-bar-row">
+                <span class="risk-bar-label">API</span>
+                <div class="risk-bar-track"><div class="risk-bar-fill yellow" t-att-style="'width:' + mixPct('api') + '%'"/></div>
+                <span class="risk-bar-count"><t t-esc="mixCount('api')"/></span>
+            </div>
+        </div>
+
+        <div class="safeo-engine-timeline-grid">
+            <div class="safeo-card">
+                <h3>SafeO engine efficiency (FastAPI)</h3>
+                <p class="safeo-note">Tiered LLM invokes semantic scoring only in the gray band (plus a small drift sample). Repeated payloads reuse a short TTL decision cache.</p>
+                <div class="safeo-engine-stats">
+                    <div class="safeo-engine-stat">
+                        <div class="safeo-engine-stat-val"><t t-esc="state.metrics.llm_calls_total || 0"/></div>
+                        <div class="safeo-engine-stat-lbl">LLM calls</div>
+                    </div>
+                    <div class="safeo-engine-stat">
+                        <div class="safeo-engine-stat-val"><t t-esc="state.metrics.llm_calls_skipped || 0"/></div>
+                        <div class="safeo-engine-stat-lbl">LLM skipped</div>
+                    </div>
+                    <div class="safeo-engine-stat">
+                        <div class="safeo-engine-stat-val"><t t-esc="state.metrics.decision_cache_hits || 0"/></div>
+                        <div class="safeo-engine-stat-lbl">Cache hits</div>
+                    </div>
+                </div>
+                <p t-if="state.apiOffline" class="safeo-note">Counters stay at zero while the API is offline.</p>
+            </div>
+            <div class="safeo-card">
+                <h3>Last 24 hours — hourly audit timeline</h3>
+                <p class="safeo-note"><t t-esc="state.metrics.timeline_note || ''"/></p>
+                <div class="safeo-timeline-scroll">
+                    <t t-foreach="timelineRows()" t-as="row" t-key="row.label">
+                        <div class="safeo-timeline-row">
+                            <span class="safeo-timeline-lbl"><t t-esc="row.label"/></span>
+                            <div class="safeo-timeline-track">
+                                <div class="safeo-timeline-outer" t-att-style="'width:' + timelineBarPct(row.total) + '%'">
+                                    <div class="safeo-timeline-stack" t-att-title="'auth ' + row.auth + ' waf ' + row.waf + ' api ' + row.api">
+                                        <span class="safeo-timeline-seg auth" t-att-style="'width:' + timelineSegPct(row.auth, row) + '%'"/>
+                                        <span class="safeo-timeline-seg waf" t-att-style="'width:' + timelineSegPct(row.waf, row) + '%'"/>
+                                        <span class="safeo-timeline-seg api" t-att-style="'width:' + timelineSegPct(row.api, row) + '%'"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="safeo-timeline-count"><t t-esc="row.total"/></span>
+                        </div>
+                    </t>
+                </div>
+                <div t-if="!timelineRows().length" class="safeo-empty">No audit events in the last 24 hours.</div>
+            </div>
+        </div>
+
+        <div class="safeo-card safeo-scope-card">
+            <h3>What The ERP Protection Layer Covers</h3>
+            <p class="safeo-note"><t t-esc="state.context.scope_note"/></p>
+            <div class="safeo-scope-grid">
+                <div class="safeo-scope-item">
+                    <span class="safeo-tag">CRM</span>
+                    <span class="safeo-scope-desc">All CRM contact form submissions and lead inputs — scanned for SQLi, XSS, Prompt Injection and more</span>
+                </div>
+                <div class="safeo-scope-item">
+                    <span class="safeo-tag">Authentication</span>
+                    <span class="safeo-scope-desc">Every login, logout, and session event — captured in the Audit Trail with IP and timestamp</span>
+                </div>
+                <div class="safeo-scope-item">
+                    <span class="safeo-tag">Website</span>
+                    <span class="safeo-scope-desc">Website contact and signup forms — analyzed for business risk before submission is accepted</span>
+                </div>
+                <div class="safeo-scope-item">
+                    <span class="safeo-tag">Decision Lab</span>
+                    <span class="safeo-scope-desc">Live test payloads you run below — same decision engine, results appear in recent decisions immediately</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="safeo-mid-grid">
+            <div class="safeo-card">
+                <h3>Risk Distribution (Pie Chart)</h3>
+                <p class="safeo-note safeo-note-tight">This is how SafeO classifies real-time ERP activity into risk levels.</p>
+                <div class="safeo-risk-pie-row">
+                    <div class="safeo-risk-pie" t-att-style="riskPieStyle()" title="Low / medium / high mix"/>
+                    <div class="safeo-risk-pie-side">
+                        <div class="risk-bar-row">
+                            <span class="risk-bar-label">Low</span>
+                            <div class="risk-bar-track"><div class="risk-bar-fill blue" t-att-style="'width:' + riskPct('low') + '%'"/></div>
+                            <span class="risk-bar-count"><t t-esc="riskPct('low') + '%'"/></span>
+                        </div>
+                        <div class="risk-bar-row">
+                            <span class="risk-bar-label">Medium</span>
+                            <div class="risk-bar-track"><div class="risk-bar-fill yellow" t-att-style="'width:' + riskPct('medium') + '%'"/></div>
+                            <span class="risk-bar-count"><t t-esc="riskPct('medium') + '%'"/></span>
+                        </div>
+                        <div class="risk-bar-row">
+                            <span class="risk-bar-label">High</span>
+                            <div class="risk-bar-track"><div class="risk-bar-fill red" t-att-style="'width:' + riskPct('high') + '%'"/></div>
+                            <span class="risk-bar-count"><t t-esc="riskPct('high') + '%'"/></span>
+                        </div>
+                        <div t-if="!riskPieHasData()" class="safeo-empty safeo-empty-inline">No scored activities yet — run Decision Lab or CRM tests.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="safeo-card">
+                <h3>Threats by Application</h3>
+                <t t-foreach="moduleEntries()" t-as="entry" t-key="entry.name">
+                    <div class="module-bar-row">
+                        <span class="module-bar-label"><t t-esc="entry.name"/></span>
+                        <div class="module-bar-track"><div class="module-bar-fill" t-att-style="'width:' + modulePct(entry.count) + '%'"/></div>
+                        <span class="module-bar-count"><t t-esc="entry.count"/></span>
+                    </div>
+                </t>
+                <div t-if="!moduleEntries().length" class="safeo-empty">No module events yet.</div>
+            </div>
+        </div>
+
+        <div class="safeo-logs-card">
+            <h3>ERP Decision Logs</h3>
+            <div t-if="state.logs.length">
+                <table class="safeo-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Application</th>
+                            <th>User</th>
+                            <th>Input</th>
+                            <th>Risk</th>
+                            <th>Decision</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="state.logs" t-as="log" t-key="log.id">
+                            <tr>
+                                <td><t t-esc="formatTime(log.timestamp)"/></td>
+                                <td><t t-esc="log.module || 'N/A'"/></td>
+                                <td><t t-esc="log.user_id ? log.user_id[1] : 'N/A'"/></td>
+                                <td><t t-esc="log.input_preview || '-'"/></td>
+                                <td><t t-esc="Math.round((log.risk_score || 0) * 100) + '%'"/></td>
+                                <td><span t-att-class="'decision-badge ' + log.decision"><t t-esc="(log.decision || '').toUpperCase()"/></span></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+            <div t-else="" class="safeo-empty">No ERP decisions yet.</div>
+        </div>
+
+        <div class="safeo-logs-card">
+            <h3>Login Activity and Audit Trail</h3>
+            <div t-if="state.auditLogs.length">
+                <table class="safeo-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Event</th>
+                            <th>Status</th>
+                            <th>User / Login</th>
+                            <th>Application</th>
+                            <th>Route</th>
+                            <th>IP</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="state.auditLogs" t-as="a" t-key="a.id">
+                            <tr>
+                                <td><t t-esc="formatTime(a.timestamp)"/></td>
+                                <td><t t-esc="a.event_type"/></td>
+                                <td><span t-att-class="'decision-badge ' + auditStatusClass(a.status)"><t t-esc="(a.status || '').toUpperCase()"/></span></td>
+                                <td><t t-esc="a.user_id ? a.user_id[1] : (a.login || '-')"/></td>
+                                <td><t t-esc="a.application || '-'"/></td>
+                                <td><t t-esc="a.route || '-'"/></td>
+                                <td><t t-esc="a.ip_address || '-'"/></td>
+                                <td><t t-esc="a.details || '-'"/></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+            <div t-else="" class="safeo-empty">No authentication or audit activity recorded yet.</div>
+        </div>
+
+        <div class="safeo-sim-card">
+            <h3>Risk Scenario Simulation</h3>
+            <p class="sim-subtitle">Runs curated payloads through the real-time ERP risk scorer — entropy, keyword detection, and behavioral signals.</p>
+            <button class="sim-run-btn" t-att-class="state.simLoading ? 'sim-run-btn is-busy' : 'sim-run-btn'" t-on-click="runSimulation">
+                <t t-if="state.simLoading">Running simulation...</t>
+                <t t-else="">Run risk simulation</t>
+            </button>
+
+            <div t-if="state.simError" class="safeo-sim-error"><t t-esc="state.simError"/></div>
+
+            <div t-if="state.simulation" class="sim-summary">
+                <div class="sim-summary-card"><div class="sim-summary-value"><t t-esc="state.simulation.total_attacks"/></div><div class="sim-summary-label">Total</div></div>
+                <div class="sim-summary-card"><div class="sim-summary-value"><t t-esc="state.simulation.detected_count"/></div><div class="sim-summary-label">Flagged</div></div>
+                <div class="sim-summary-card"><div class="sim-summary-value"><t t-esc="(state.simulation.detection_rate || 0) + '%'"/></div><div class="sim-summary-label">Rate</div></div>
+            </div>
+
+            <div t-if="state.simulation" class="sim-results-wrap">
+                <table class="safeo-table safeo-table-compact" t-if="simulationResults().length">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Payload</th>
+                            <th>Risk</th>
+                            <th>Decision</th>
+                            <th>Flagged</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="simulationResults()" t-as="row" t-key="row_index">
+                            <tr>
+                                <td><t t-esc="row.attack_type"/></td>
+                                <td class="sim-payload-cell"><t t-esc="row.payload"/></td>
+                                <td><t t-esc="Math.round((row.risk_score || 0) * 100) + '%'"/></td>
+                                <td><span t-att-class="'decision-badge ' + (row.decision || 'allow')"><t t-esc="(row.decision || '').toUpperCase()"/></span></td>
+                                <td t-att-class="simRowDetectedClass(row)"><t t-esc="row.detected ? 'Yes' : 'No'"/></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        </t>
+
+        <t t-if="state.viewMode === 'investigations'">
+        <div class="safeo-card">
+            <h3>Active Investigations</h3>
+            <p class="safeo-inv-hint">Click an investigation to expand — agent conversation appears below.</p>
+            <div t-if="state.investigations.length">
+                <t t-foreach="state.investigations" t-as="inv" t-key="inv.scan_id">
+                    <div t-att-class="'safeo-inv-row' + (isInvestigationExpanded(inv.scan_id) ? ' safeo-inv-row-open' : '')" t-att-data-scan-id="inv.scan_id" t-on-click="onInvestigationRowClick">
+                        <span class="safeo-inv-chevron"><t t-esc="isInvestigationExpanded(inv.scan_id) ? '▼' : '▶'"/></span>
+                        <span class="mono"><t t-esc="(inv.scan_id || '').slice(0, 8)"/></span>
+                        <span><t t-esc="formatTime(inv.timestamp)"/></span>
+                        <span><t t-esc="inv.final_verdict || '—'"/></span>
+                        <span t-if="inv.human_required" class="tier-badge tier-llm">Human required</span>
+                    </div>
+                    <div t-if="state.expandedInvestigation === inv.scan_id" class="safeo-inv-detail">
+                        <div t-if="state.investigationLoading">Loading investigation...</div>
+                        <t t-elif="state.investigationDetail and !state.investigationDetail.error">
+                            <div><b>Policy violations:</b> <t t-esc="invPolicies(state.investigationDetail)"/></div>
+                            <div><b>Attack type:</b> <t t-esc="state.investigationDetail.forensics_result and state.investigationDetail.forensics_result.attack_type or '—'"/></div>
+                            <div><b>Signatures:</b> <t t-esc="invSignatures(state.investigationDetail)"/></div>
+                            <div><b>Remediation:</b> <t t-esc="state.investigationDetail.remediation_result and state.investigationDetail.remediation_result.action or '—'"/>
+                                <span t-if="state.investigationDetail.remediation_result and state.investigationDetail.remediation_result.irreversible" class="tier-badge tier-llm">irreversible</span>
+                            </div>
+                            <div><b>Verdict:</b> <t t-esc="state.investigationDetail.final_verdict"/> (<t t-esc="state.investigationDetail.investigation_ms"/> ms)</div>
+                            <div t-if="inv.human_required and inv.approved === undefined" class="safeo-lab-actions">
+                                <button class="sim-run-btn" t-att-data-scan-id="inv.scan_id" t-on-click="onApproveInvestigationClick">Approve</button>
+                                <button class="safeo-refresh-btn" t-att-data-scan-id="inv.scan_id" t-on-click="onRejectInvestigationClick">Reject</button>
+                            </div>
+                        </t>
+                        <div t-elif="state.investigationDetail and state.investigationDetail.error" class="safeo-agent-chat-unavailable">
+                            <t t-esc="state.investigationDetail.error"/>
+                        </div>
+                        <div class="safeo-agent-chat">
+                            <div class="safeo-agent-chat-header">
+                                <h4>Agent Investigation</h4>
+                                <span class="safeo-agent-chat-status">
+                                    <span t-att-class="agentChatStatusDotClass()"/>
+                                    <span class="safeo-agent-chat-status-text"><t t-esc="agentChatStatusLabel()"/></span>
+                                </span>
+                            </div>
+                            <div t-if="state.investigationLoading and !state.agentChatMessages.length" class="safeo-agent-chat-unavailable">
+                                Loading agent conversation...
+                            </div>
+                            <div t-elif="state.agentChatUnavailable and !state.agentChatMessages.length" class="safeo-agent-chat-unavailable">
+                                Agent logs unavailable for this investigation
+                            </div>
+                            <div t-else="" class="safeo-agent-chat-messages">
+                                <t t-foreach="state.agentChatMessages" t-as="amsg" t-key="amsg_index">
+                                    <div class="safeo-agent-msg-row">
+                                        <div t-att-class="'safeo-agent-avatar ' + agentChatAvatarClass(amsg.agent)">
+                                            <t t-esc="agentChatInitials(amsg.agent)"/>
+                                        </div>
+                                        <div class="safeo-agent-msg-body">
+                                            <div class="safeo-agent-msg-meta">
+                                                <span class="safeo-agent-msg-name"><t t-esc="amsg.agent"/></span>
+                                                <span class="safeo-agent-msg-time"><t t-esc="agentChatTime(amsg.timestamp)"/></span>
+                                            </div>
+                                            <div t-att-class="'safeo-agent-msg-content ' + agentChatContentClass(amsg.status)">
+                                                <t t-esc="agentChatContentPrefix(amsg.status)"/><t t-esc="amsg.content"/>
+                                            </div>
+                                            <div t-if="amsg.status === 'done' and amsg.metadata" class="safeo-agent-msg-json-wrap">
+                                                <button type="button" class="safeo-agent-meta-toggle" t-att-data-meta-idx="amsg_index" t-on-click="onToggleAgentMetaClick">
+                                                    <t t-esc="isAgentMetaExpanded(amsg_index) ? 'Hide metadata' : 'Show metadata'"/>
+                                                </button>
+                                                <pre t-if="isAgentMetaExpanded(amsg_index)" class="safeo-agent-meta-json"><t t-esc="agentChatMetaJson(amsg)"/></pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </t>
+                                <div t-if="state.agentChatClosed" class="safeo-agent-chat-closed">Connection closed</div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </div>
+            <div t-else="" class="safeo-empty">No investigations yet. BLOCK decisions trigger auto-investigation.</div>
+        </div>
+        </t>
+
+        <t t-if="state.viewMode === 'integrations'">
+        <div class="safeo-mid-grid">
+            <div class="safeo-card">
+                <h3>Odoo ERP</h3>
+                <span class="decision-badge allow">Connected</span>
+                <p class="safeo-note">Native SafeO module — ERP workflows protected in-process.</p>
+            </div>
+            <div class="safeo-card">
+                <h3>REST API</h3>
+                <pre class="safeo-code">curl -H "Authorization: Bearer internal" -H "Content-Type: application/json" -d '{"input":"..."}' http://127.0.0.1:8001/v1/scan</pre>
+            </div>
+            <div class="safeo-card">
+                <h3>Python SDK</h3>
+                <pre class="safeo-code">from safeo_sdk.python.client import SafeOClient
+client = SafeOClient(api_key="internal")
+result = client.scan("payload", context={"source_system": "myapp"})
+print(result["decision"])</pre>
+            </div>
+            <div class="safeo-card">
+                <h3>Model Health</h3>
+                <div>False positive rate: <t t-esc="formatPct(state.modelHealth.false_positive_rate)"/>%</div>
+                <div>Retraining count: <t t-esc="state.modelHealth.retraining_count || 0"/></div>
+                <div>Feedback total: <t t-esc="state.modelHealth.feedback_total || 0"/></div>
+            </div>
+            <div class="safeo-card">
+                <h3>AMD — Local AI</h3>
+                <div><t t-esc="gpuStats().device_name || 'CPU mode'"/></div>
+                <div><t t-esc="Math.round(gpuStats().memory_used_mb || 0)"/> / <t t-esc="Math.round(gpuStats().memory_total_mb || 0)"/> MB</div>
+                <p class="safeo-note">All AI runs locally on AMD GPU — no OpenAI.</p>
+            </div>
+        </div>
+        </t>
+
+        <t t-if="state.viewMode === 'attack_lab'">
+        <div class="safeo-sim-card safeo-attack-lab-card">
+            <h3>Payload Sandbox</h3>
+            <p class="sim-subtitle">POST /v1/scan — tiered ML pipeline. Same backend for standalone API and Odoo CRM hooks.</p>
+            <div class="safeo-lab-actions safeo-mode-toggle">
+                <span>Send to:</span>
+                <button t-att-class="state.sandboxMode === 'standalone' ? 'safeo-refresh-btn active' : 'safeo-refresh-btn'" t-on-click="setSandboxStandalone">Standalone</button>
+                <button t-att-class="state.sandboxMode === 'odoo_dual' ? 'safeo-refresh-btn active' : 'safeo-refresh-btn'" t-on-click="setSandboxOdooDual">Odoo + Standalone</button>
+            </div>
+            <div class="safeo-lab-actions">
+                <label>Source:</label>
+                <select class="safeo-lab-select" t-model="state.labSourceSystem">
+                    <option value="Odoo">Odoo</option>
+                    <option value="REST API">REST API</option>
+                    <option value="Custom App">Custom App</option>
+                    <option value="Shopify">Shopify</option>
+                </select>
+            </div>
+            <div class="safeo-lab-presets">
+                <button class="safeo-refresh-btn" data-preset="sqli" t-on-click="setLabPresetFromEvent">SQLi</button>
+                <button class="safeo-refresh-btn" data-preset="xss" t-on-click="setLabPresetFromEvent">XSS</button>
+                <button class="safeo-refresh-btn" data-preset="ssti" t-on-click="setLabPresetFromEvent">SSTI</button>
+                <button class="safeo-refresh-btn" data-preset="prompt" t-on-click="setLabPresetFromEvent">Prompt</button>
+                <button class="safeo-refresh-btn" data-preset="benign" t-on-click="setLabPresetFromEvent">Benign</button>
+                <button class="safeo-refresh-btn" data-preset="arabic_benign" t-on-click="setLabPresetFromEvent">Arabic Benign</button>
+                <button class="safeo-refresh-btn" data-preset="urdu_sqli" t-on-click="setLabPresetFromEvent">Urdu SQLi</button>
+            </div>
+            <textarea class="safeo-lab-input" rows="5" t-model="state.labPayload" placeholder="Paste payload here..."></textarea>
+            <div class="safeo-lab-actions">
+                <button class="sim-run-btn" t-att-class="state.labRunning ? 'sim-run-btn is-busy' : 'sim-run-btn'" t-on-click="runAttackLab">
+                    <t t-if="state.labRunning">Scanning...</t>
+                    <t t-else="">Run Live Scan</t>
+                </button>
+                <button class="safeo-refresh-btn" t-on-click="clearLab">Clear</button>
+            </div>
+            <div t-if="state.labError" class="safeo-api-warning"><t t-esc="state.labError"/></div>
+
+            <div t-if="state.labV1Result" class="safeo-tier-pipeline">
+                <div t-att-class="'tier-box ' + (labTierActive(1) ? 'active' : (labTierSkipped(1) ? 'skipped' : ''))">Tier 1 Heuristic</div>
+                <span>→</span>
+                <div t-att-class="'tier-box ' + (labTierActive(2) ? 'active' : (labTierSkipped(2) ? 'skipped' : ''))">Tier 2 distilBERT</div>
+                <span>→</span>
+                <div t-att-class="'tier-box ' + (labTierActive(3) ? 'active' : (labTierSkipped(3) ? 'skipped' : ''))">Tier 3 LLM (AMD)</div>
+            </div>
+
+            <div t-if="state.labResult" class="safeo-lab-result">
+                <div><b>Decision:</b> <span t-att-class="'decision-badge ' + (state.labResult.decision || 'allow')"><t t-esc="(state.labResult.decision || 'allow').toUpperCase()"/></span></div>
+                <div t-if="state.labV1Result"><b>Script:</b> <span class="tier-badge tier-t2"><t t-esc="state.labV1Result.script_detected || 'latin'"/></span></div>
+                <div><b>Risk Score:</b> <t t-esc="Math.round((state.labResult.risk_score || 0) * 100) + '%'"/></div>
+                <div t-if="state.labV1Result and state.labV1Result.behavioural_risk_score"><b>Behavioural:</b> <t t-esc="state.labV1Result.behavioural_risk_score"/></div>
+                <div><b>Explanation:</b> <t t-esc="state.labResult.explanation || '-'"/></div>
+                <div><b>Detected Patterns:</b> <t t-esc="(state.labResult.detected_patterns || []).join(' | ') || 'none'"/></div>
+                <div t-if="(state.labResult.decision || '').toLowerCase() === 'block'" class="safeo-note">Investigation triggered — see Investigations tab.</div>
+            </div>
+
+            <div t-if="state.odooInjectResult" class="safeo-card safeo-inject-result">
+                <div t-if="state.odooInjectResult.error" class="safeo-api-warning"><t t-esc="state.odooInjectResult.error"/></div>
+                <t t-else="">
+                    <b>Odoo CRM inject:</b>
+                    lead_id=<t t-esc="state.odooInjectResult.lead_id or 'blocked'"/>,
+                    decision=<t t-esc="state.odooInjectResult.decision or '—'"/>,
+                    risk=<t t-esc="Math.round((state.odooInjectResult.risk_score || 0) * 100)"/>%
+                </t>
+                <div class="safeo-note">
+                    Also injected into Odoo CRM —
+                    <a href="/odoo/crm" target="_blank" rel="noopener noreferrer">open CRM pipeline</a>
+                </div>
+            </div>
+
+            <div class="safeo-lab-grid">
+                <div class="safeo-card">
+                    <h3>Decision Lab Risk Logs</h3>
+                    <div t-if="state.labSecurityLogs.length">
+                        <table class="safeo-table">
+                            <thead><tr><th>Timestamp</th><th>App</th><th>Risk</th><th>Decision</th><th>Patterns</th></tr></thead>
+                            <tbody>
+                                <t t-foreach="state.labSecurityLogs" t-as="l" t-key="l.timestamp + (l.module || '')">
+                                    <tr>
+                                        <td><t t-esc="formatTime(l.timestamp)"/></td>
+                                        <td><t t-esc="l.module || '-'"/></td>
+                                        <td><t t-esc="Math.round((l.risk_score || 0) * 100) + '%'"/></td>
+                                        <td><span t-att-class="'decision-badge ' + (l.decision || 'allow')"><t t-esc="(l.decision || 'allow').toUpperCase()"/></span></td>
+                                        <td><t t-esc="l.detected_patterns || '-'"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div t-else="" class="safeo-empty">No risk logs loaded yet.</div>
+                </div>
+                <div class="safeo-card">
+                    <h3>Decision Lab Audit Trail</h3>
+                    <div t-if="state.labAuditLogs.length">
+                        <table class="safeo-table">
+                            <thead><tr><th>Timestamp</th><th>Event</th><th>Status</th><th>User</th><th>Details</th></tr></thead>
+                            <tbody>
+                                <t t-foreach="state.labAuditLogs" t-as="a" t-key="a.timestamp + (a.event_type || '')">
+                                    <tr>
+                                        <td><t t-esc="formatTime(a.timestamp)"/></td>
+                                        <td><t t-esc="a.event_type || '-'"/></td>
+                                        <td><span t-att-class="'decision-badge ' + auditStatusClass(a.status)"><t t-esc="(a.status || '').toUpperCase()"/></span></td>
+                                        <td><t t-esc="a.login || '-'"/></td>
+                                        <td><t t-esc="a.details || '-'"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div t-else="" class="safeo-empty">No audit logs loaded yet.</div>
+                </div>
+            </div>
+        </div>
+        </t>
+            </div>
+        </div>
+    </div>
+    <div class="safeo-gemma-badge safeo-gemma-badge--default" role="status" aria-live="polite">
+        <span class="safeo-gemma-badge-dot" aria-hidden="true"/>
+        <span class="safeo-gemma-badge-text">⚡ Powered by Gemma on AMD</span>
+    </div>
+</div>
+</t>
+</templates>

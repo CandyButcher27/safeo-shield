@@ -1,0 +1,465 @@
+================================================================================
+                         SafeO — APPLICATION OVERVIEW
+================================================================================
+
+Last updated: June 2026
+Repository:  SafeO_lablabai
+
+
+================================================================================
+PART 1 — SIMPLE WRITE-UP (WHAT IS SafeO?)
+================================================================================
+
+SafeO is a security decision engine that sits between users and your business
+applications. Every time someone submits text — a form field, an API payload, an
+ERP transaction, a CRM note — SafeO reads it first, scores how dangerous it is,
+and decides what to do before anything is saved.
+
+The three possible outcomes are:
+
+  ALLOW  — Input is safe; proceed normally.
+  WARN   — Suspicious; flag for review but allow with caution.
+  BLOCK  — High risk; stop the action and launch an investigation.
+
+When SafeO blocks something, it does not just say "no." It opens an
+Investigation Room: a team of AI agents work together like a mini security
+operations center. One agent checks language and evasion tricks. Two agents run
+in parallel — one checks compliance policies, another reconstructs the attack
+
+attack. A verifier agent double-checks that the findings actually apply. Finally,
+a remediation agent recommends what to do next (block, require MFA, suspend
+user, etc.).
+
+SafeO is built for regulated enterprises — banks, government, healthcare, ERP
+users — who need:
+
+  • Real-time protection at the point of data entry (not after the fact)
+  • Explainable decisions with matched patterns and audit trails
+  • Multilingual support (English, Arabic, Urdu, Arabizi)
+  • Self-hosted inference (no requirement to send data to OpenAI or cloud LLMs)
+  • Human-in-the-loop approval for irreversible actions
+
+The demo ships with an Odoo 19 ERP module (dashboard, investigation UI, Jira
+escalation) and a standalone Vite/React website. Any system can integrate via
+the REST API at POST /v1/scan.
+
+
+================================================================================
+PART 2 — TECHNICAL ARCHITECTURE
+================================================================================
+
+STACK
+-----
+  Backend:   Python 3.11, FastAPI 0.115, Uvicorn (port 8001)
+  Frontend:  Odoo 19 OWL module (port 8069) + Vite/React website (port 5174)
+  ML:        Heuristics + DistilBERT + optional local Mistral-7B via vLLM
+  Agents:    Custom Python agents + local LangGraph-style orchestration
+  Storage:   SQLite (feedback, Bayesian thresholds), in-memory (investigations)
+  Real-time: WebSocket /ws/investigation/{scan_id}
+
+DIRECTORY LAYOUT
+----------------
+  backend/safeo_backend/     FastAPI app, agents, ML pipeline, routes
+  frontend/odoo_module/      Odoo 19 addon (securec_odoo)
+  frontend/website/          Standalone React dashboard
+  docs/                      Architecture and setup documentation
+  backend/sdk/python/        SafeOClient for /v1/scan integration
+
+
+================================================================================
+PART 3 — CORE FEATURES (ORIGINAL PLATFORM)
+================================================================================
+
+1. THREE-TIER ML SCORING PIPELINE
+   --------------------------------
+   Tier 1 — Heuristics (always runs)
+     • Regex pattern matching (SQLi, XSS, prompt injection, path traversal,
+       command injection, SSRF, SSTI, ERP fraud patterns, etc.)
+     • Shannon entropy analysis
+     • N-gram similarity to known attack corpora
+     • Multilingual script normalization before matching
+
+   Tier 2 — DistilBERT classifier (uncertain band 0.35–0.65)
+     • Runs only when Tier 1 score is ambiguous
+     • Blends 40% heuristic + 60% neural when confidence >= 0.80
+     • TF-IDF fallback retrained from human feedback
+
+   Tier 3 — Local LLM via vLLM (gray-zone escalation)
+     • Mistral-7B-Instruct on self-hosted vLLM server
+     • JSON response: risk_score, attack_type, explanation
+     • Only invoked when Tier 2 does not resolve ambiguity
+
+2. MULTILINGUAL AGENT
+   -------------------
+   • Detects script: Latin, Arabic, Urdu, Arabizi, mixed
+   • Normalizes mixed-script input before pattern matching
+   • AraBERT embeddings (aubmindlab/bert-base-arabertv2) for evasion detection
+   • GPU-accelerated on AMD ROCm when available; heuristic fallback on CPU
+   • Catches Arabic/Urdu SQL keywords, digit-equality obfuscation, embedding
+     similarity to known attack phrases
+
+3. BEHAVIORAL RISK SCORING
+   ------------------------
+   • Per-user action velocity tracking (CUSUM change-point detection)
+   • Risky field combination detection (salary + bank + email, etc.)
+   • Off-hours activity scoring
+   • Bulk action fingerprinting
+   • Combined with payload risk for suspend_user decisions
+
+4. ERP-NATIVE INTEGRATION (ODOO 19)
+   ---------------------------------
+   • securec_odoo addon hooks ir.http for request interception
+   • Scans CRM leads, finance actions, employee activity, transactions
+   • OWL dashboard with live risk metrics and investigation war room
+   • Jira REST API escalation for BLOCK decisions (SEC-* tickets)
+   • Policy management UI per jurisdiction (UAE, EU, US, Global)
+
+5. UNIVERSAL REST API (/v1/*)
+   ----------------------------
+   POST /v1/scan          — Single input scan
+   POST /v1/scan/batch    — Up to 50 inputs concurrently
+   POST /v1/feedback      — Human verdict on a prior scan
+   GET  /v1/health        — Component availability flags
+   Bearer token auth on all /v1/* routes
+
+6. INVESTIGATION ROOM (MULTI-AGENT ORCHESTRATION)
+   -----------------------------------------------
+   Triggered automatically on BLOCK decisions (fire-and-forget async).
+   Original scan response is never delayed.
+
+   Flow:
+     MultilingualAgent  (sequential — script + normalization)
+           |
+     PolicyAgent + ForensicsAgent  (parallel via asyncio.gather)
+           |
+     RemediationAgent  (sequential — proposes action)
+
+   Each step broadcasts to:
+     • WebSocket clients (200-msg ring buffer, full replay on reconnect)
+     • WebSocket investigation stream and local checkpointed graph state
+     • In-memory investigation store (last 100 records)
+
+7. POLICY AGENT
+   -------------
+   • Jurisdiction-aware compliance mapping: UAE, EU, US, Global
+   • Threshold-based policy violation detection
+   • Severity mapping: info / low / medium / high / critical
+   • Citations: GDPR Art. 32, NIS2, UAE Cybercrime Law, NIST CSF, OWASP Top 10
+
+8. FORENSICS AGENT
+   ----------------
+   • Reconstructs attack from matched patterns and entropy signals
+   • Identifies obfuscation method (URL encoding, Base64, non-Latin script)
+   • Builds attack timeline: encoding → signature match → intent
+   • Maps attack types to human-readable intent descriptions
+
+9. REMEDIATION AGENT
+   ------------------
+   • Proposes: block_input | require_mfa | flag_for_review | suspend_user
+   • auto_execute=True  for safe immediate actions (block_input)
+   • irreversible=True  for suspend_user (requires human approval)
+   • Considers behavioral score + policy severity + forensics confidence
+
+10. ACTIVE RETRAINING LOOP
+    -----------------------
+    • Human feedback stored in SQLite (safeo_feedback.db)
+    • Every 50 false_positive/false_negative records triggers retraining:
+      - Tier 1: keyword category weights adjusted ±10%
+      - Tier 2: TF-IDF fallback retrained on accumulated labelled examples
+    • Error rates (FP/FN) tracked and exposed via /ml/model-health
+
+11. DRIFT DETECTION
+    ---------------
+    • PSI (Population Stability Index) monitor on score distributions
+    • Sampled Tier-3 LLM calls for drift verification
+    • Exposed via GET /ml/drift-status
+
+12. REAL-TIME DASHBOARD & METRICS
+    -----------------------------
+    GET /metrics              — Block rate, threats by module, risk distribution
+    GET /ml/tier-stats        — Tier 1/2/3 call counts, LLM savings %
+    GET /ml/full-stats        — Aggregated dashboard polling endpoint
+    GET /ml/gpu-stats         — AMD GPU memory and utilisation
+    WebSocket investigation stream for live agent conversation replay
+
+13. LOCAL LANGGRAPH-STYLE AGENT ORCHESTRATION
+    ------------------------------------------
+    • Replaces Band with an in-process stateful investigation graph
+    • Coordinates 5 agents: Multilingual, Policy, Forensics, Verifier, Remediation
+    • Checkpoints SHA-256 state hashes at every node transition
+    • Runs Policy and Forensics in parallel, never sequentially
+    • Skips remediation when Verifier final_decision is ALLOW
+
+
+================================================================================
+PART 4 — ENHANCED FEATURES (RECENT ADDITIONS)
+================================================================================
+
+These features were added to strengthen SafeO's architecture story for
+enterprise credibility, reduced false positives, and agent specialization.
+
+
+1. AGENT MODEL SPECIALIZATION
+   ---------------------------
+   Each investigation agent is configured to use the model best suited to its
+   cognitive task. LLM augmentation is OFF by default (zero-dependency cold
+   start); enable with SAFEO_ENABLE_AGENT_LLM=true.
+
+   Agent              Model                          Task
+   ----------------   -----------------------------  ---------------------------
+   MultilingualAgent  AraBERT (HuggingFace local)    Script detection, evasion
+   PolicyAgent        Llama-3-70B-Instruct           Rule citation, compliance
+   ForensicsAgent     DeepSeek-R1                    Chain-of-thought, MITRE
+   RemediationAgent   GPT-4o-mini                    Structured action lists
+   VerifierAgent      Llama-3-70B-Instruct           Convergence reasoning
+
+   Config: backend/safeo_backend/config/amd_config.py
+   Env vars: SAFEO_POLICY_AGENT_MODEL, SAFEO_FORENSICS_AGENT_MODEL,
+             SAFEO_REMEDIATION_AGENT_MODEL, SAFEO_VERIFIER_AGENT_MODEL
+
+   When LLM augmentation is disabled, all agents run deterministic rule logic
+   with no external API calls. When enabled, agents call the vLLM-compatible
+   endpoint and merge LLM output into their results. Each result includes a
+   model_used field for audit transparency.
+
+
+2. ATTACK PATTERN KNOWLEDGE GRAPH
+   -------------------------------
+   Inspired by Cascade's KG-grounded agents. ForensicsAgent no longer reasons
+   from free text alone — it queries a structured attack graph and injects
+   verifiable evidence into every diagnosis.
+
+   File: backend/safeo_backend/agents/attack_graph.py
+
+   Graph nodes (15 attack families):
+     sql_injection, blind_sqli, union_based_sqli, xss, stored_xss,
+     reflected_xss, dom_based_xss, command_injection, path_traversal, ssrf,
+     prompt_injection, ssti_template_injection, erp_financial_fraud,
+     erp_data_exfiltration, erp_privilege_abuse
+
+   Each node carries:
+     • children:        attack variants (e.g. blind SQLi, stored XSS)
+     • mitre:           MITRE ATT&CK technique IDs (T1190, T1059.007, etc.)
+     • cve_examples:    representative CVE identifiers
+     • remediation_ids: playbook IDs (REM-001 through REM-012)
+     • indicators:      canonical strings for pattern-to-node matching
+
+   ForensicsAgent output now includes:
+     graph_evidence, mitre_techniques, remediation_ids, remediation_playbooks
+
+   Diagnoses are traceable: every attack finding links to MITRE IDs, CVE
+   examples, and concrete remediation playbooks — not hallucinated text.
+
+
+3. SHA-256 HASH CHAIN AUDIT TRAIL
+   -------------------------------
+   Every investigation record is tamper-evident. Each record carries:
+
+     investigation_hash = SHA-256(
+       scan_id + verdict + agent_verdicts + prev_hash + timestamp
+     )
+
+   Records form a Merkle-style linked list. Modifying any past record breaks
+   all subsequent hashes — critical for regulated enterprises requiring
+   auditable security decision logs.
+
+   New fields on investigation records:
+     investigation_hash  — SHA-256 of this record's committed state
+     prev_hash           — hash of the previous record (genesis = 000...000)
+
+   New endpoints:
+     GET /investigations/audit-chain
+       → { total, valid, broken_at, intact }
+
+   verify_audit_chain() walks the full chain and reports integrity status.
+
+
+4. VERIFIER AGENT (META-JUDGE)
+   ----------------------------
+   New agent inserted between parallel analysis and remediation. Inspired by
+   Drift Agent's meta-judge concept.
+
+   Updated investigation flow:
+     MultilingualAgent
+           |
+     PolicyAgent ──┐
+                   ├── parallel ──→ VerifierAgent ──→ RemediationAgent
+     ForensicsAgent ┘
+
+   VerifierAgent checks:
+     1. Convergence — do Policy and Forensics agree?
+        (converged | partial | diverged)
+     2. False-positive signals:
+        - Payload too short (< 12 chars) for credible attack
+        - Ambiguous attack type with no knowledge-graph evidence
+        - Encoding-only patterns (no attack payload after decoding)
+        - Agent divergence with low forensics confidence
+     3. KG corroboration — MITRE-grounded graph evidence lifts FP suspicion
+
+   When false positive is suspected, RemediationAgent receives a discounted
+   effective_risk score (fp_discount applied), preventing over-eager
+   irreversible actions on misclassified inputs.
+
+   File: backend/safeo_backend/agents/verifier_agent.py
+
+
+5. BAYESIAN THRESHOLD ADAPTATION ENGINE
+   -------------------------------------
+   The BLOCK threshold (previously hardcoded at 0.70) now adapts from human
+   feedback using Beta-Bayesian inference.
+
+   File: backend/safeo_backend/core/ml/bayesian_threshold.py
+
+   How it works:
+     • Maintains Beta(alpha, beta) distribution per attack class
+     • Starting prior: Beta(4, 2) → initial threshold ≈ 0.67
+     • Threshold = alpha / (alpha + beta), clamped to [0.45, 0.90]
+
+   Update rules (on each human feedback event):
+     correct + BLOCK           → alpha += 1  (threshold was appropriate)
+     false_positive            → beta  += 1  (threshold too low)
+     false_negative + ALLOW    → alpha += 2  (missed attack — weighted 2x)
+     correct + ALLOW           → no update
+
+   Per-class tracking (separate Beta distributions):
+     sqli, xss, prompt_injection, arabizi, arabic_injection, other
+     Classes with < 10 samples fall back to global threshold.
+
+   Drift alert: fires when using threshold shifted > 0.05 over last 10 updates.
+
+   Output on each feedback event (JSON):
+     updated_alpha, updated_beta, new_threshold,
+     threshold_95_low, threshold_95_high,
+     confidence (low/medium/high),
+     recommendation (lower_threshold | raise_threshold | stable),
+     class_thresholds, drift_alert, reasoning
+
+   Optional Fireworks LLM (llama-v3p1-8b-instruct, temperature=0.0) generates
+   the one-sentence reasoning field only. All threshold math is deterministic
+   Python — no LLM required for core operation.
+
+   New endpoints:
+     GET /ml/bayesian-threshold   — live threshold state
+     GET /ml/model-health         — includes bayesian_threshold block
+
+   Scan responses now include:
+     attack_class, block_threshold (adaptive, per-class)
+
+
+================================================================================
+PART 5 — API REFERENCE (KEY ENDPOINTS)
+================================================================================
+
+SCANNING
+  POST /v1/scan                    Scan single input
+  POST /v1/scan/batch              Scan up to 50 inputs
+  POST /v1/feedback                Submit human verdict + get threshold update
+  GET  /v1/health                  Service health
+
+ERP (ODOO DEMO)
+  POST /erp/transaction            ERP transaction scan
+  POST /erp/employee/activity      Employee activity scan
+  POST /erp/crm/lead               CRM lead scan
+  POST /erp/finance/action         Finance action scan
+  GET  /erp/dashboard/summary        ERP security summary
+
+INVESTIGATIONS
+  GET  /investigations             List recent investigations
+  GET  /investigations/{scan_id}   Full investigation detail + agent log
+  GET  /investigations/audit-chain Verify SHA-256 hash chain integrity
+  POST /investigations/{scan_id}/approve   Human approve remediation
+  POST /investigations/{scan_id}/reject    Human reject (false positive)
+
+ML & METRICS
+  GET  /metrics                    Business risk dashboard metrics
+  GET  /ml/tier-stats              Tier 1/2/3 decision counts
+  GET  /ml/drift-status            PSI drift detector status
+  GET  /ml/model-health            Error rates + Bayesian threshold state
+  GET  /ml/bayesian-threshold      Adaptive BLOCK threshold details
+  GET  /ml/retraining-log          Last 20 retraining events
+  GET  /ml/gpu-stats               AMD GPU utilisation
+  GET  /ml/full-stats              Aggregated dashboard endpoint
+
+REAL-TIME
+  WS   /ws/investigation/{scan_id} Live agent conversation stream
+
+LEGACY WAF
+  POST /waf/input                  Legacy input scan
+  POST /waf/output                 Legacy output scan
+  POST /waf/behavior               Track user behavior
+
+
+================================================================================
+PART 6 — THREAT COVERAGE
+================================================================================
+
+Attack categories detected:
+  sql_injection          XSS (stored, reflected, DOM-based)
+  prompt_injection       command_injection
+  path_traversal         SSRF
+  ssti_template_injection  obfuscation / encoding evasion
+  erp_financial_fraud    erp_data_exfiltration
+  erp_privilege_abuse    erp_social_engineering
+  sensitive_data         malicious_url
+  multilingual_evasion   (Arabic, Urdu, Arabizi script attacks)
+
+Multilingual evasion techniques handled:
+  URL encoding (single and double)
+  Base64 encoding
+  Hex escape sequences
+  HTML entity encoding
+  Non-Latin script obfuscation (Arabic SQL keywords, digit equality)
+  AraBERT embedding similarity to known attack phrases
+
+
+================================================================================
+PART 7 — CONFIGURATION & DEPLOYMENT
+================================================================================
+
+REQUIREMENTS
+  Python 3.11+
+  FastAPI, Uvicorn, transformers, scipy, openai (for vLLM client)
+  Optional: torch + ROCm for GPU, vLLM for Tier 3 local LLM
+
+QUICK START
+  cd backend
+  cp .env.example .env        # fill in API keys
+  pip install -r requirements.txt
+  uvicorn safeo_backend.main:app --host 127.0.0.1 --port 8001
+
+KEY ENVIRONMENT VARIABLES
+  SAFEO_API_KEYS                   Bearer tokens for /v1/* auth
+  SECUREC_ENABLE_LLM_AUGMENTATION  Enable Tier 3 vLLM (default: true)
+  SAFEO_LLM_SERVER_URL             vLLM endpoint (default: localhost:8000/v1)
+  SAFEO_ENABLE_AGENT_LLM           Enable per-agent LLM augmentation (default: false)
+  SAFEO_ENABLE_BAYESIAN_LLM        Fireworks reasoning for threshold updates (default: false)
+  FIREWORKS_API_KEY                Fireworks API key (optional)
+  SAFEO_ENABLE_AGENT_LLM           Optional Fireworks augmentation for graph agents
+  SAFEO_FEEDBACK_DB                Override SQLite feedback DB path
+
+PORTS
+  8001  SafeO FastAPI backend
+  8069  Odoo 19 (demo ERP)
+  5174  Vite standalone website
+  8000  vLLM server (optional, Tier 3)
+
+
+================================================================================
+PART 8 — DESIGN PRINCIPLES
+================================================================================
+
+1. Self-hosted first — no cloud LLM required on the default path
+2. Explainable decisions — matched_patterns[], agent logs, MITRE IDs, not black boxes
+3. Zero-dependency cold start — agents run rule logic without GPU or vLLM
+4. Human-in-the-loop — irreversible actions require explicit approval
+5. Tamper-evident audit — SHA-256 hash chain on every investigation
+6. Adaptive thresholds — Bayesian engine learns from operator feedback
+7. False-positive reduction — Verifier meta-judge before remediation acts
+8. Agent specialization — each agent uses the model suited to its task
+9. KG-grounded forensics — attack diagnoses link to MITRE, CVE, remediation playbooks
+10. Enterprise-ready — jurisdiction policies, Jira escalation, regulated workflow support
+
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================

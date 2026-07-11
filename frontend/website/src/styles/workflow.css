@@ -1,0 +1,487 @@
+/* ───────────────────────────────────────────────────────────
+   SafeO Workflow Builder  —  white theme, full-screen, seamless
+──────────────────────────────────────────────────────────── */
+
+/* root fills the entire viewport below the header */
+.wf-root {
+  position: fixed;
+  inset: 0;
+  top: 65px;          /* height of safeo-header */
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  z-index: 0;
+}
+
+/* ── toolbar ──────────────────────────────────────────────── */
+.wf-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 18px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  z-index: 10;
+}
+
+.wf-bar-left,
+.wf-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.wf-name-input {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 220px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.wf-name-input:focus { border-color: #6366f1; }
+
+.wf-sample-input {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 13px;
+  min-width: 260px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.wf-sample-input:focus { border-color: #6366f1; }
+
+.wf-observe-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+
+.wf-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, box-shadow 0.12s;
+  white-space: nowrap;
+}
+.wf-btn.primary  { background: #111827; color: #fff; }
+.wf-btn.primary:hover { background: #1f2937; }
+.wf-btn.ghost    { background: #fff; color: #374151; border: 1px solid #e5e7eb; }
+.wf-btn.ghost:hover { background: #f9fafb; }
+.wf-btn.outline  { background: #fff; color: #6366f1; border: 1.5px solid #6366f1; }
+.wf-btn.outline:hover { background: #eef2ff; }
+.wf-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.wf-toast {
+  padding: 7px 18px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.wf-toast.ok   { background: #ecfdf5; color: #065f46; }
+.wf-toast.warn { background: #fffbeb; color: #92400e; }
+
+/* ── body: palette + canvas ──────────────────────────────── */
+.wf-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── left palette ─────────────────────────────────────────── */
+.wf-panel {
+  width: 264px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #e5e7eb;
+  padding: 14px 12px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.wf-panel-sub {
+  font-size: 11.5px;
+  color: #9ca3af;
+  margin: 0 0 14px;
+  line-height: 1.4;
+}
+
+.wf-section {
+  margin-bottom: 14px;
+}
+
+.wf-section-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+.wf-section-fixed {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+}
+
+.wf-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  cursor: grab;
+  margin-bottom: 4px;
+  transition: background 0.1s, border-color 0.1s;
+}
+.wf-chip:hover { background: #f8fafc; border-color: #e5e7eb; }
+.wf-chip:active { cursor: grabbing; }
+.wf-chip-locked { opacity: 0.6; cursor: not-allowed; }
+.wf-chip-fixed  { background: #f8fafc; border: 1px dashed #e5e7eb; cursor: default; }
+
+.wf-chip-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.wf-chip-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.wf-chip-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.3;
+}
+
+.wf-chip-soon {
+  font-size: 9.5px;
+  color: #9ca3af;
+}
+
+.wf-chip-sub {
+  font-size: 10.5px;
+  color: #6b7280;
+  line-height: 1.3;
+}
+
+.wf-panel-hint {
+  font-size: 11px;
+  color: #9ca3af;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+/* ── canvas ───────────────────────────────────────────────── */
+.wf-canvas {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background-color: #111827;
+  background-image: radial-gradient(circle, #374151 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+  user-select: none;
+  touch-action: none;
+}
+
+/* transforming surface */
+.wf-surface {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3200px;
+  height: 1800px;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* SVG edges */
+.wf-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.wf-svg * { pointer-events: none; }
+
+/* ── nodes ────────────────────────────────────────────────── */
+.wf-node {
+  position: absolute;
+  width: 210px;
+  min-height: 76px;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  display: flex;
+  align-items: stretch;
+  cursor: move;
+  transition: box-shadow 0.15s;
+  /* expose accent colour via CSS variable set inline */
+}
+
+.wf-node:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+
+.wf-node-sel {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.18), 0 4px 16px rgba(0,0,0,0.10);
+}
+
+/* fixed nodes get a subtle left accent bar */
+.wf-node-fixed::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--nc, #94a3b8);
+  opacity: 0.7;
+}
+
+.wf-node-start { border-color: #bbf7d0; }
+.wf-node-end   { border-color: #fecaca; }
+.wf-node-risk  { border-color: #1f2937; border-width: 2px; }
+
+.wf-node-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 11px 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.wf-node-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.wf-node-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.wf-node-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.wf-node-sub {
+  font-size: 10.5px;
+  color: #6b7280;
+  margin-top: 3px;
+  line-height: 1.3;
+}
+
+.wf-pills {
+  display: flex;
+  gap: 4px;
+  margin-top: 7px;
+  flex-wrap: wrap;
+}
+.wf-pills .pill {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.pill.allow { background: #dcfce7; color: #166534; }
+.pill.warn  { background: #fef3c7; color: #92400e; }
+.pill.block { background: #fee2e2; color: #b91c1c; }
+
+.wf-soon-tag {
+  font-size: 9.5px;
+  color: #9ca3af;
+  display: block;
+  margin-top: 4px;
+}
+
+/* ── connection handles ───────────────────────────────────── */
+.wf-handle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #cbd5e1;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: crosshair;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  z-index: 2;
+  flex-shrink: 0;
+}
+.wf-handle:hover,
+.wf-h-target {
+  border-color: #6366f1;
+  background: #eef2ff;
+  box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+}
+.wf-h-left  { left:  -10px; }
+.wf-h-right { right: -10px; }
+
+/* ── zoom controls ────────────────────────────────────────── */
+.wf-zoom {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+}
+
+.wf-zoom button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  background: #1f2937;
+  font-size: 16px;
+  font-weight: 600;
+  color: #e5e7eb;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  transition: background 0.1s;
+}
+.wf-zoom button:hover { background: #374151; }
+
+.wf-zoom span {
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+/* ── empty hint ───────────────────────────────────────────── */
+.wf-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.wf-empty-card {
+  pointer-events: auto;
+  max-width: 380px;
+  padding: 22px 26px;
+  background: rgba(31,41,55,0.95);
+  border: 2px dashed #374151;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+.wf-empty-card h4 { margin: 0 0 8px; font-size: 15px; color: #f9fafb; }
+.wf-empty-card p  { margin: 0; font-size: 12.5px; color: #9ca3af; line-height: 1.5; }
+
+/* ── minimap ──────────────────────────────────────────────── */
+.wf-minimap {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 150px;
+  height: 90px;
+  background: rgba(17,24,39,0.9);
+  border: 1px solid #374151;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  overflow: hidden;
+  z-index: 10;
+}
+
+.wf-mm-node {
+  position: absolute;
+  width: 9px;
+  height: 5px;
+  border-radius: 2px;
+  opacity: 0.8;
+  transform: translate(-50%, -50%);
+}
+
+/* ── run result panel ─────────────────────────────────────── */
+.wf-run-panel {
+  position: absolute;
+  right: 180px;
+  bottom: 16px;
+  width: 380px;
+  max-height: 280px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+}
+
+.wf-run-panel h4 {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wf-run-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.wf-run-panel pre {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 11px;
+  overflow: auto;
+  flex: 1;
+  background: #f8fafc;
+}
+
+/* ── override Layout so canvas fills screen ─────────────── */
+.safeo-main.wf-main-full {
+  padding: 0 !important;
+  max-width: none !important;
+  overflow: hidden;
+  height: calc(100vh - 65px);
+}

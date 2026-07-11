@@ -1,0 +1,1 @@
+"""SafeO HTTP middleware."""

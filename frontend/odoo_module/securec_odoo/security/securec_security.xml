@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="group_securec_user" model="res.groups">
+        <field name="name">SafeO User</field>
+    </record>
+
+    <record id="group_securec_admin" model="res.groups">
+        <field name="name">SafeO Administrator</field>
+        <field name="implied_ids" eval="[(4, ref('securec_odoo.group_securec_user'))]"/>
+    </record>
+</odoo>

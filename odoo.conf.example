@@ -1,0 +1,12 @@
+# Copy to your Odoo install directory as odoo.conf
+# Replace /path/to/SafeO_lablabai with your clone path
+
+[options]
+db_host = localhost
+db_port = 5432
+db_user = YOUR_PG_USER
+db_password =
+addons_path = addons,odoo/addons,/path/to/SafeO_lablabai/frontend/odoo_module
+db_name = securec_db
+list_db = False
+http_interface = 127.0.0.1

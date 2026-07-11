@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Default system parameters -->
+    <record id="param_api_url" model="ir.config_parameter">
+        <field name="key">securec.api_url</field>
+        <field name="value">http://localhost:8001</field>
+    </record>
+    <record id="param_block_threshold" model="ir.config_parameter">
+        <field name="key">securec.block_threshold</field>
+        <field name="value">0.70</field>
+    </record>
+    <record id="param_warn_threshold" model="ir.config_parameter">
+        <field name="key">securec.warn_threshold</field>
+        <field name="value">0.30</field>
+    </record>
+    <record id="param_enable_crm" model="ir.config_parameter">
+        <field name="key">securec.enable_crm</field>
+        <field name="value">True</field>
+    </record>
+    <record id="param_enable_website_form" model="ir.config_parameter">
+        <field name="key">securec.enable_website_form</field>
+        <field name="value">True</field>
+    </record>
+    <record id="param_enable_signup_protection" model="ir.config_parameter">
+        <field name="key">securec.enable_signup_protection</field>
+        <field name="value">True</field>
+    </record>
+    <record id="param_monitored_apps" model="ir.config_parameter">
+        <field name="key">securec.monitored_apps</field>
+        <field name="value">CRM,Authentication,Website,AttackLab,GlobalMonitor</field>
+    </record>
+    <record id="param_enable_global_monitor" model="ir.config_parameter">
+        <field name="key">securec.enable_global_monitor</field>
+        <field name="value">True</field>
+    </record>
+    <record id="param_estimated_exposure_aed_per_block" model="ir.config_parameter">
+        <field name="key">securec.estimated_exposure_aed_per_block</field>
+        <field name="value">500</field>
+    </record>
+
+    <!-- ── Default Regional Compliance Policies ─────────────────────────── -->
+
+    <record id="policy_uae" model="securec.policy">
+        <field name="name">UAE Compliance Policy</field>
+        <field name="region">uae</field>
+        <field name="pii_strictness">high</field>
+        <field name="block_threshold">0.7</field>
+        <field name="masking_enabled" eval="True"/>
+        <field name="logging_required" eval="True"/>
+        <field name="description">UAE data protection policy: high PII strictness, mandatory audit logging, and output masking enabled.</field>
+    </record>
+
+    <record id="policy_eu" model="securec.policy">
+        <field name="name">EU GDPR Policy</field>
+        <field name="region">eu</field>
+        <field name="pii_strictness">very_high</field>
+        <field name="block_threshold">0.6</field>
+        <field name="masking_enabled" eval="True"/>
+        <field name="logging_required" eval="True"/>
+        <field name="description">EU GDPR policy: very high PII strictness with the lowest block threshold. All events must be logged.</field>
+    </record>
+
+    <record id="policy_us" model="securec.policy">
+        <field name="name">US Security Policy</field>
+        <field name="region">us</field>
+        <field name="pii_strictness">medium</field>
+        <field name="block_threshold">0.8</field>
+        <field name="masking_enabled" eval="False"/>
+        <field name="logging_required" eval="False"/>
+        <field name="description">US baseline security policy: medium PII strictness, higher block threshold, masking optional.</field>
+    </record>
+
+    <record id="policy_global" model="securec.policy">
+        <field name="name">Global Default Policy</field>
+        <field name="region">global</field>
+        <field name="pii_strictness">medium</field>
+        <field name="block_threshold">0.75</field>
+        <field name="masking_enabled" eval="False"/>
+        <field name="logging_required" eval="True"/>
+        <field name="description">Catch-all global policy for regions without a specific compliance requirement.</field>
+    </record>
+</odoo>

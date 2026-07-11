@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!--
+        ERP Risk Decision Log Views
+        ============================
+        These views expose the safeo.erp.decision model — SafeO's native ERP
+        decision record — to Odoo users.  Every CRM lead save, financial action,
+        and employee activity that passes through the risk engine is stored here.
+
+        Judges can see:
+        - Which ERP module triggered the decision (CRM, Finance, HR …)
+        - The risk score (0–100) and decision (ALLOW / WARN / BLOCK)
+        - The business impact in plain language (transaction approved / blocked)
+        - The specific patterns that triggered the risk score
+    -->
+
+    <!-- ── List view: shows all decisions in a sortable table ── -->
+    <record id="view_safeo_erp_decision_list" model="ir.ui.view">
+        <field name="name">safeo.erp.decision.list</field>
+        <field name="model">safeo.erp.decision</field>
+        <field name="arch" type="xml">
+            <list string="ERP Risk Decisions" decoration-danger="decision == 'BLOCK'"
+                  decoration-warning="decision == 'WARN'" decoration-success="decision == 'ALLOW'">
+                <field name="timestamp"/>
+                <field name="erp_module"/>
+                <field name="erp_action"/>
+                <field name="employee_id"/>
+                <field name="risk_score"/>
+                <field name="risk_level" widget="badge"
+                       decoration-danger="risk_level == 'high'"
+                       decoration-warning="risk_level == 'medium'"
+                       decoration-success="risk_level == 'low'"/>
+                <field name="decision" widget="badge"
+                       decoration-danger="decision == 'BLOCK'"
+                       decoration-warning="decision == 'WARN'"
+                       decoration-success="decision == 'ALLOW'"/>
+                <field name="business_impact"/>
+                <field name="network_signal"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Form view: full detail of one ERP decision ── -->
+    <record id="view_safeo_erp_decision_form" model="ir.ui.view">
+        <field name="name">safeo.erp.decision.form</field>
+        <field name="model">safeo.erp.decision</field>
+        <field name="arch" type="xml">
+            <form string="ERP Risk Decision" create="false" edit="false">
+                <sheet>
+                    <group>
+                        <group string="ERP Context">
+                            <field name="erp_module"/>
+                            <field name="erp_action"/>
+                            <field name="employee_id"/>
+                            <field name="user_id"/>
+                            <field name="crm_lead_id" invisible="not crm_lead_id"/>
+                        </group>
+                        <group string="Risk Decision">
+                            <field name="risk_score"/>
+                            <field name="risk_level"/>
+                            <field name="decision" widget="badge"
+                                   decoration-danger="decision == 'BLOCK'"
+                                   decoration-warning="decision == 'WARN'"
+                                   decoration-success="decision == 'ALLOW'"/>
+                            <field name="business_impact"/>
+                            <field name="network_signal"/>
+                        </group>
+                    </group>
+                    <group string="Decision Reason">
+                        <field name="reason" nolabel="1"/>
+                    </group>
+                    <group string="Detection Details">
+                        <field name="detected_patterns"/>
+                        <field name="request_id"/>
+                        <field name="timestamp"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Search view: filter by module, decision, risk level ── -->
+    <record id="view_safeo_erp_decision_search" model="ir.ui.view">
+        <field name="name">safeo.erp.decision.search</field>
+        <field name="model">safeo.erp.decision</field>
+        <field name="arch" type="xml">
+            <search string="Search ERP Decisions">
+                <field name="erp_module"/>
+                <field name="erp_action"/>
+                <field name="employee_id"/>
+                <filter name="blocked" string="Blocked" domain="[('decision','=','BLOCK')]"/>
+                <filter name="warned" string="Flagged" domain="[('decision','=','WARN')]"/>
+                <filter name="allowed" string="Allowed" domain="[('decision','=','ALLOW')]"/>
+                <separator/>
+                <filter name="high_risk" string="High Risk" domain="[('risk_level','=','high')]"/>
+                <filter name="crm" string="CRM" domain="[('erp_module','=','CRM')]"/>
+                <filter name="finance" string="Finance" domain="[('erp_module','=','Finance')]"/>
+                <filter name="hr" string="HR" domain="[('erp_module','=','HR')]"/>
+                <separator/>
+                <filter name="group_module" string="Group by Module" context="{'group_by': 'erp_module'}"/>
+                <filter name="group_decision" string="Group by Decision" context="{'group_by': 'decision'}"/>
+                <filter name="group_risk" string="Group by Risk Level" context="{'group_by': 'risk_level'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── Window action that opens the list view ── -->
+    <record id="action_safeo_erp_decision_list" model="ir.actions.act_window">
+        <field name="name">ERP Decision Log</field>
+        <field name="res_model">safeo.erp.decision</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_safeo_erp_decision_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No ERP risk decisions recorded yet.
+            </p>
+            <p>
+                Decisions appear here when CRM leads, financial actions, or
+                employee activities pass through the SafeO risk engine.
+            </p>
+        </field>
+    </record>
+</odoo>

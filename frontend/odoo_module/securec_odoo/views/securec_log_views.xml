@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- List view -->
+    <record id="view_securec_log_list" model="ir.ui.view">
+        <field name="name">securec.log.list</field>
+        <field name="model">securec.log</field>
+        <field name="arch" type="xml">
+            <list string="Security Audit Logs"
+                  decoration-danger="risk_level == 'high'"
+                  decoration-warning="risk_level == 'medium'"
+                  decoration-success="risk_level == 'low'"
+                  default_order="timestamp desc">
+                <field name="timestamp"/>
+                <field name="module"/>
+                <field name="user_id"/>
+                <field name="input_preview"/>
+                <field name="detected_language" widget="badge"
+                       decoration-info="detected_language == 'en'"
+                       decoration-warning="detected_language == 'ar'"
+                       decoration-danger="detected_language == 'mixed'"
+                       optional="show"/>
+                <field name="policy_region" optional="show"/>
+                <field name="risk_score" widget="progressbar" options="{'editable': false}"/>
+                <field name="risk_level" column_invisible="1"/>
+                <field name="decision" widget="badge"
+                       decoration-danger="decision == 'block'"
+                       decoration-warning="decision == 'warn'"
+                       decoration-info="decision == 'sanitize'"
+                       decoration-success="decision == 'allow'"/>
+                <field name="jira_ticket_id" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form view -->
+    <record id="view_securec_log_form" model="ir.ui.view">
+        <field name="name">securec.log.form</field>
+        <field name="model">securec.log</field>
+        <field name="arch" type="xml">
+            <form string="Security Log Entry" create="false" edit="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="input_preview"/></h1>
+                    </div>
+                    <group>
+                        <group string="Threat Analysis">
+                            <field name="risk_score" widget="progressbar"/>
+                            <field name="risk_level" widget="badge"
+                                   decoration-danger="risk_level == 'high'"
+                                   decoration-warning="risk_level == 'medium'"
+                                   decoration-success="risk_level == 'low'"/>
+                            <field name="decision" widget="badge"
+                                   decoration-danger="decision == 'block'"
+                                   decoration-warning="decision == 'warn'"
+                                   decoration-success="decision == 'allow'"/>
+                        </group>
+                        <group string="Context">
+                            <field name="module"/>
+                            <field name="user_id"/>
+                            <field name="timestamp"/>
+                            <field name="jira_ticket_id"/>
+                            <field name="jira_ticket_url" widget="url"/>
+                        </group>
+                    </group>
+
+                    <!-- Language & Policy Summary Bar -->
+                    <div class="alert alert-info mb-3" role="alert"
+                         style="border-radius:8px; padding:12px 16px; background:#ebf8ff; border:1px solid #bee3f8;">
+                        <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+                            <span>
+                                <b>🌐 Language:</b>&#160;
+                                <field name="detected_language" widget="badge"
+                                       decoration-info="detected_language == 'en'"
+                                       decoration-warning="detected_language == 'ar'"
+                                       decoration-danger="detected_language == 'mixed'"
+                                       nolabel="1"/>
+                            </span>
+                            <span invisible="not policy_region">
+                                <b>🗺️ Region:</b>&#160;
+                                <field name="policy_region" nolabel="1"/>
+                            </span>
+                            <span invisible="not policy_decision_reason">
+                                <b>⚖️ Policy:</b>&#160;
+                                <field name="policy_decision_reason" nolabel="1"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <notebook>
+                        <page string="AI Explanation">
+                            <group>
+                                <field name="explanation" nolabel="1" widget="text"/>
+                            </group>
+                        </page>
+                        <page string="Detected Patterns">
+                            <group>
+                                <field name="detected_patterns" nolabel="1" widget="text"/>
+                            </group>
+                        </page>
+                        <page string="Full Input">
+                            <group>
+                                <field name="input_text" nolabel="1" widget="text"/>
+                            </group>
+                        </page>
+                        <page string="Sanitized Output">
+                            <group>
+                                <field name="sanitized_text" nolabel="1" widget="text"/>
+                            </group>
+                        </page>
+                        <page string="Normalized Interpretation"
+                              invisible="not normalized_text">
+                            <div style="padding:8px; background:#fffbeb; border-radius:6px; border:1px solid #f6e05e; margin-bottom:8px;">
+                                <i>This is the Arabizi-normalized version of the input used for multilingual threat detection.</i>
+                            </div>
+                            <group>
+                                <field name="normalized_text" nolabel="1" widget="text"/>
+                            </group>
+                        </page>
+                        <page string="Applied Policy"
+                              invisible="not policy_id">
+                            <group>
+                                <field name="policy_id" readonly="1"/>
+                                <field name="policy_region" readonly="1"/>
+                                <field name="policy_decision_reason" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search view -->
+    <record id="view_securec_log_search" model="ir.ui.view">
+        <field name="name">securec.log.search</field>
+        <field name="model">securec.log</field>
+        <field name="arch" type="xml">
+            <search string="Search Security Logs">
+                <field name="input_preview" string="Input"/>
+                <field name="module"/>
+                <field name="user_id"/>
+                <separator/>
+                <filter string="High Risk" name="high_risk" domain="[('risk_level','=','high')]"/>
+                <filter string="Medium Risk" name="medium_risk" domain="[('risk_level','=','medium')]"/>
+                <filter string="Blocked" name="blocked" domain="[('decision','=','block')]"/>
+                <filter string="Warned" name="warned" domain="[('decision','=','warn')]"/>
+                <separator/>
+                <!-- Language filters -->
+                <filter string="🇬🇧 English" name="lang_en" domain="[('detected_language','=','en')]"/>
+                <filter string="🇦🇪 Arabic" name="lang_ar" domain="[('detected_language','=','ar')]"/>
+                <filter string="🔀 Mixed / Arabizi" name="lang_mixed" domain="[('detected_language','=','mixed')]"/>
+                <separator/>
+                <!-- Region filters -->
+                <filter string="UAE Region" name="region_uae" domain="[('policy_region','=','uae')]"/>
+                <filter string="EU Region" name="region_eu" domain="[('policy_region','=','eu')]"/>
+                <filter string="US Region" name="region_us" domain="[('policy_region','=','us')]"/>
+                <separator/>
+                <filter string="CRM" name="crm" domain="[('module','=','CRM')]"/>
+                <filter string="Email" name="email" domain="[('module','=','Email')]"/>
+                <group>
+                    <filter string="Decision" name="by_decision" context="{'group_by': 'decision'}"/>
+                    <filter string="Risk Level" name="by_risk" context="{'group_by': 'risk_level'}"/>
+                    <filter string="Language" name="by_language" context="{'group_by': 'detected_language'}"/>
+                    <filter string="Module" name="by_module" context="{'group_by': 'module'}"/>
+                    <filter string="User" name="by_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Date" name="by_date" context="{'group_by': 'timestamp:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_securec_log_list" model="ir.actions.act_window">
+        <field name="name">Security Audit Logs</field>
+        <field name="res_model">securec.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_securec_log_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No security events recorded yet</p>
+            <p>Events appear here once SafeO intercepts suspicious activity.</p>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_securec_dashboard" model="ir.actions.client">
+        <field name="name">SafeO Dashboard</field>
+        <field name="tag">safeo_dashboard</field>
+        <!-- Stable URL so bookmarks / app switcher land on the dashboard -->
+        <field name="path">safeo</field>
+        <field name="context">{}</field>
+    </record>
+
+    <record id="action_securec_attack_lab_dashboard" model="ir.actions.client">
+        <field name="name">SafeO Live Attack Lab</field>
+        <field name="tag">safeo_dashboard</field>
+        <field name="path">safeo-attack-lab</field>
+        <field name="context">{'safeo_view': 'attack_lab'}</field>
+    </record>
+</odoo>

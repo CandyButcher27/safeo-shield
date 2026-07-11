@@ -1,0 +1,15 @@
+# Render deploy: CPU-only host, no ROCm/GPU. Heavy ML (torch/transformers) is lazy-imported,
+# so the app boots without it; Gemma runs over the Fireworks HTTP API.
+# aiohttp + Pillow are boot-required (core/visual_evidence.py). scikit-learn powers the tier2
+# TF-IDF fallback (no torch). playwright screenshots are unavailable on this host.
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.6
+requests==2.32.3
+python-multipart==0.0.20
+httpx==0.28.1
+python-dotenv>=1.0.0
+openai>=1.40.0
+aiohttp>=3.9.0
+Pillow>=10.0.0
+scikit-learn>=1.4.0

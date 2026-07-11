@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Extend security log list with ML pipeline columns -->
+    <record id="view_securec_log_list_ml" model="ir.ui.view">
+        <field name="name">securec.log.list.ml</field>
+        <field name="model">securec.log</field>
+        <field name="inherit_id" ref="view_securec_log_list"/>
+        <field name="arch" type="xml">
+            <field name="decision" position="after">
+                <field name="script_detected" optional="show"/>
+                <field name="tier_used" optional="show"/>
+                <field name="investigation_verdict" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Investigations: logs with investigation_id set -->
+    <record id="view_securec_log_investigations_list" model="ir.ui.view">
+        <field name="name">securec.log.investigations.list</field>
+        <field name="model">securec.log</field>
+        <field name="arch" type="xml">
+            <list string="Investigations"
+                  decoration-danger="investigation_verdict == 'confirmed'"
+                  decoration-warning="investigation_verdict == 'pending'"
+                  default_order="timestamp desc">
+                <field name="timestamp"/>
+                <field name="user_id"/>
+                <field name="risk_score" widget="progressbar"/>
+                <field name="tier_used"/>
+                <field name="investigation_verdict" widget="badge"/>
+                <field name="evasion_suspected"/>
+                <field name="investigation_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_securec_investigations" model="ir.actions.act_window">
+        <field name="name">Investigations</field>
+        <field name="res_model">securec.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_securec_log_investigations_list"/>
+        <field name="domain">[('investigation_id', '!=', False)]</field>
+        <field name="context">{}</field>
+    </record>
+
+    <menuitem
+        id="securec_menu_investigations"
+        name="Investigations"
+        parent="securec_menu_root"
+        action="action_securec_investigations"
+        sequence="17"
+        groups="base.group_user"/>
+</odoo>

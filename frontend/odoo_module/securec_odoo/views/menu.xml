@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!--
+        SafeO ERP Protection Layer — Navigation Menu
+        =============================================
+        Menus are visible to all internal users (base.group_user) so that judges
+        and evaluators can see every section without needing admin rights.
+
+        Admin-only items (Compliance Policies, Settings) still require the
+        securec_odoo.group_securec_admin group to protect sensitive config.
+    -->
+
+    <!-- Top-level menu: appears in Odoo's main nav bar -->
+    <menuitem
+        id="securec_menu_root"
+        name="SafeO ERP"
+        sequence="5"
+        action="action_securec_dashboard"
+        groups="base.group_user"/>
+
+    <!-- Dashboard: main ERP risk posture overview -->
+    <menuitem
+        id="securec_menu_dashboard"
+        name="Business Risk Dashboard"
+        parent="securec_menu_root"
+        action="action_securec_dashboard"
+        sequence="10"
+        groups="base.group_user"/>
+
+    <!-- ERP Decision Log: the native safeo.erp.decision model -->
+    <menuitem
+        id="securec_menu_erp_decisions"
+        name="ERP Decision Log"
+        parent="securec_menu_root"
+        action="action_safeo_erp_decision_list"
+        sequence="15"
+        groups="base.group_user"/>
+
+    <!-- Decision Lab: interactive payload testing (renamed from Attack Lab) -->
+    <menuitem
+        id="securec_menu_attack_lab"
+        name="Decision Lab"
+        parent="securec_menu_root"
+        action="action_securec_attack_lab_dashboard"
+        sequence="18"
+        groups="base.group_user"/>
+
+    <!-- Security Logs: raw WAF/risk engine event log -->
+    <menuitem
+        id="securec_menu_logs"
+        name="Risk Engine Logs"
+        parent="securec_menu_root"
+        action="action_securec_log_list"
+        sequence="20"
+        groups="base.group_user"/>
+
+    <!-- Audit Activity: auth + ERP events combined timeline -->
+    <menuitem
+        id="securec_menu_audit"
+        name="ERP Audit Trail"
+        parent="securec_menu_root"
+        action="action_securec_audit_log_list"
+        sequence="22"
+        groups="base.group_user"/>
+
+    <!-- Admin only below this line -->
+
+    <!-- Compliance Policies: region-specific risk thresholds -->
+    <menuitem
+        id="securec_menu_policies"
+        name="Compliance Policies"
+        parent="securec_menu_root"
+        action="action_securec_policy_list"
+        sequence="25"
+        groups="securec_odoo.group_securec_admin"/>
+
+    <!-- Settings: API URL, thresholds, feature toggles -->
+    <menuitem
+        id="securec_menu_settings"
+        name="Settings"
+        parent="securec_menu_root"
+        action="base_setup.action_general_configuration"
+        sequence="30"
+        groups="securec_odoo.group_securec_admin"/>
+</odoo>

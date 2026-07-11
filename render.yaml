@@ -1,0 +1,61 @@
+services:
+  - type: web
+    name: safeo-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: uvicorn safeo_backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SAFEO_API_KEYS
+        sync: false
+      - key: SECUREC_ENABLE_LLM_AUGMENTATION
+        value: "false"
+      - key: SAFEO_ENABLE_AGENT_LLM
+        sync: false
+      - key: SAFEO_AGENT_LLM_SERVER_URL
+        value: https://api.fireworks.ai/inference/v1
+      - key: SAFEO_AGENT_LLM_API_KEY
+        sync: false
+      - key: SAFEO_POLICY_AGENT_MODEL
+        sync: false
+      - key: SAFEO_FORENSICS_AGENT_MODEL
+        sync: false
+      - key: SAFEO_REMEDIATION_AGENT_MODEL
+        sync: false
+      - key: SAFEO_VERIFIER_AGENT_MODEL
+        sync: false
+      - key: FIREWORKS_API_KEY
+        sync: false
+      - key: FIREWORKS_BASE_URL
+        value: https://api.fireworks.ai/inference/v1
+      - key: FIREWORKS_DRY_RUN
+        value: "false"
+      - key: SAFEO_FEEDBACK_DB
+        value: /tmp/safeo_feedback.db
+      - key: SAFEO_ENABLE_GPU_METRICS
+        value: "false"
+      - key: SAFEO_VISUAL_DEMO_BASE
+        sync: false
+      - key: JIRA_BASE_URL
+        sync: false
+      - key: JIRA_EMAIL
+        sync: false
+      - key: JIRA_API_TOKEN
+        sync: false
+      - key: JIRA_PROJECT_KEY
+        sync: false
+
+  - type: web
+    name: safeo-frontend
+    runtime: static
+    rootDir: frontend/website
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

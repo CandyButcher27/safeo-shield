@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_securec_log_user,securec.log user,model_securec_log,base.group_user,1,0,0,0
+access_securec_log_admin,securec.log admin,model_securec_log,securec_odoo.group_securec_admin,1,1,1,1
+access_securec_policy_user,securec.policy user,model_securec_policy,base.group_user,1,0,0,0
+access_securec_policy_admin,securec.policy admin,model_securec_policy,securec_odoo.group_securec_admin,1,1,1,1
+access_securec_audit_log_user,securec.audit.log user,model_securec_audit_log,base.group_user,1,0,0,0
+access_securec_audit_log_admin,securec.audit.log admin,model_securec_audit_log,securec_odoo.group_securec_admin,1,1,1,1
+access_safeo_erp_decision_user,safeo.erp.decision user,model_safeo_erp_decision,base.group_user,1,0,0,0
+access_safeo_erp_decision_admin,safeo.erp.decision admin,model_safeo_erp_decision,securec_odoo.group_securec_admin,1,1,1,1

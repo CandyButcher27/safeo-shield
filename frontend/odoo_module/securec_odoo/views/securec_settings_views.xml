@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_securec" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.securec</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="SafeO" string="SafeO" name="securec_odoo">
+                    <block title="SafeO — ERP risk protection">
+                        <setting string="SafeO API endpoint"
+                                 help="URL of the FastAPI WAF backend (default: http://localhost:8001)">
+                            <field name="securec_api_url"/>
+                        </setting>
+                        <setting string="Protected Applications"
+                                 help="Comma-separated app names shown as monitored scope in dashboard (e.g. CRM,Authentication,Website)">
+                            <field name="securec_monitored_apps"/>
+                        </setting>
+                        <setting string="Block Threshold"
+                                 help="Risk score (0–1) that triggers a full block (default: 0.70)">
+                            <field name="securec_block_threshold"/>
+                        </setting>
+                        <setting string="Warn Threshold"
+                                 help="Risk score (0–1) that triggers a warning (default: 0.30)">
+                            <field name="securec_warn_threshold"/>
+                        </setting>
+                        <setting string="Illustrative AED per WAF block (dashboard)"
+                                 help="Hackathon metric: today’s block count × this value = estimated exposure signal (not real financial loss).">
+                            <field name="securec_estimated_exposure_aed_per_block"/>
+                        </setting>
+                    </block>
+
+                    <block title="Protection Modules">
+                        <setting string="CRM Protection"
+                                 help="Intercept and scan CRM lead inputs for threats">
+                            <field name="securec_enable_crm"/>
+                        </setting>
+                        <setting string="Website Form Protection"
+                                 help="Intercept /website/form submissions and WAF-scan payloads before save/send">
+                            <field name="securec_enable_website_form"/>
+                        </setting>
+                        <setting string="Website Signup Protection"
+                                 help="Scan /web/signup payloads and block high-risk account creation attempts">
+                            <field name="securec_enable_signup_protection"/>
+                        </setting>
+                        <setting string="Global Installed-App Monitor"
+                                 help="Monitor suspicious POST/JSON payloads from installed Odoo apps to surface cross-app vulnerabilities">
+                            <field name="securec_enable_global_monitor"/>
+                        </setting>
+                        <setting string="Output Leakage Detection"
+                                 help="Scan outgoing messages for PII and sensitive data">
+                            <field name="securec_enable_output"/>
+                        </setting>
+                        <setting string="Insider Threat Detection"
+                                 help="Monitor user behavior patterns for anomalies">
+                            <field name="securec_enable_behavior"/>
+                        </setting>
+                    </block>
+
+                    <block title="Jira Integration">
+                        <setting string="Jira Base URL"
+                                 help="e.g. https://yourorg.atlassian.net — auto-creates tickets for high-risk threats">
+                            <field name="securec_jira_url"/>
+                        </setting>
+                        <setting string="Jira User Email">
+                            <field name="securec_jira_user"/>
+                        </setting>
+                        <setting string="Jira API Token">
+                            <field name="securec_jira_token" password="True"/>
+                        </setting>
+                        <setting string="Jira Project Key" help="e.g. SEC">
+                            <field name="securec_jira_project"/>
+                        </setting>
+                    </block>
+
+                    <block title="AMD / Local LLM">
+                        <setting string="AMD GPU Acceleration"
+                                 help="Enable AMD ROCm GPU acceleration for tier-2 and tier-3 models">
+                            <field name="amd_gpu_enabled"/>
+                        </setting>
+                        <setting string="Local LLM URL"
+                                 help="vLLM OpenAI-compatible endpoint (default http://localhost:8000/v1)">
+                            <field name="local_llm_url"/>
+                        </setting>
+                    </block>
+
+                    <block title="Region &amp; Compliance Policy">
+                        <setting string="Active Compliance Policy"
+                                 help="Select a regional policy (UAE, EU, US, Global) to govern block thresholds, PII masking, and logging requirements. Overrides the global block threshold above.">
+                            <field name="securec_active_policy_id"
+                                   options="{'no_create': True}"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>
